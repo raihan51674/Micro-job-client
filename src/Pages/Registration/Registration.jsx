@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import Lottie from 'lottie-react';
@@ -18,6 +18,7 @@ import {
 } from 'react-icons/fa';
 import registrationLotti from '../../assets/Lottie/registration-lottie.json';
 import { Link } from 'react-router'; // Changed to react-router-dom for proper Link usage
+import { AuthContext } from '../../Provider/AuthProvider';
 
 const Registration = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -25,6 +26,10 @@ const Registration = () => {
     const [profilePreview, setProfilePreview] = useState(null);
     const [passwordStrength, setPasswordStrength] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
+
+    const { createUser, signInWithGoogle, updateUserProfile, loading } = useContext(AuthContext)
+
+
 
     const {
         register,
@@ -92,10 +97,15 @@ const Registration = () => {
 
     const onSubmit = async (data) => {
         setIsLoading(true);
-        console.log(data);
         // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        const result = await createUser(email, password);
 
+
+        await updateUserProfile(
+            data?.name,
+            'https://lh3.googleusercontent.com/a/ACg8ocKUMU3XIX-JSUB80Gj_bYIWfYudpibgdwZE1xqmAGxHASgdvCZZ=s96-c'
+        )
+        console.log(result?.user);
         setIsLoading(false);
 
         Swal.fire({
