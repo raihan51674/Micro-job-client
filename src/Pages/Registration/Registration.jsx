@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import Lottie from 'lottie-react';
@@ -13,9 +13,11 @@ import {
     FaUserTie,
     FaShoppingCart,
     FaCheck,
-    FaTimes
+    FaTimes,
+    FaGoogle // Import Google icon
 } from 'react-icons/fa';
 import registrationLotti from '../../assets/Lottie/registration-lottie.json';
+import { Link } from 'react-router'; // Changed to react-router-dom for proper Link usage
 
 const Registration = () => {
     const [showPassword, setShowPassword] = useState(false);
@@ -28,7 +30,7 @@ const Registration = () => {
         register,
         handleSubmit,
         watch,
-        setValue, // Added setValue to programmatically set radio button
+        setValue,
         formState: { errors },
         setError,
         clearErrors
@@ -36,15 +38,15 @@ const Registration = () => {
 
     const password = watch('password');
     const email = watch('email');
-    const selectedRole = watch('role'); // Watch the selected role
+    const selectedRole = watch('role');
 
     // Password strength calculation
-    React.useEffect(() => {
+    useEffect(() => {
         if (password) {
             let strength = 0;
             if (password.length >= 8) strength++;
             if (/[A-Z]/.test(password)) strength++;
-            if (/[a-z]/.test(password)) strength++;
+            if (/S[a-z]/.test(password)) strength++;
             if (/[0-9]/.test(password)) strength++;
             if (/[^A-Za-z0-9]/.test(password)) strength++;
             setPasswordStrength(strength);
@@ -54,7 +56,7 @@ const Registration = () => {
     }, [password]);
 
     // Email validation
-    React.useEffect(() => {
+    useEffect(() => {
         if (email && email.includes('@')) {
             // Simulate checking for existing email
             if (email === 'test@example.com') {
@@ -103,6 +105,22 @@ const Registration = () => {
             confirmButtonText: 'Continue',
             confirmButtonColor: '#8B5CF6'
         });
+    };
+
+    const handleGoogleSignUp = async () => {
+        setIsLoading(true);
+        console.log('Signing up with Google...');
+        // Simulate Google sign-up process
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setIsLoading(false);
+        Swal.fire({
+            title: 'Google Sign-up Initiated!',
+            text: 'You would typically be redirected to Google for authentication here.',
+            icon: 'info',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#8B5CF6'
+        });
+        // Here you would integrate with Firebase, Auth0, or your backend for Google OAuth
     };
 
     const getPasswordStrengthColor = () => {
@@ -326,12 +344,12 @@ const Registration = () => {
                                                 {...register('role', { required: 'Please select a role' })}
                                                 type="radio"
                                                 value="worker"
-                                                className="sr-only peer" // Added peer class
+                                                className="sr-only peer"
                                             />
                                             <div
                                                 className={`p-4 bg-white/10 border-2 rounded-xl hover:bg-white/20 transition-all duration-300 text-center flex flex-col items-center justify-center h-full
-                          ${selectedRole === 'worker' ? 'border-purple-400 bg-purple-500/20 shadow-xl scale-[1.03] animate-pulse-once' : 'border-white/20'}
-                        `}
+                                        ${selectedRole === 'worker' ? 'border-purple-400 bg-purple-500/20 shadow-xl scale-[1.03] animate-pulse-once' : 'border-white/20'}
+                                    `}
                                             >
                                                 <FaUserTie className="text-3xl text-purple-300 mb-2" />
                                                 <span className="text-white font-medium text-lg">Worker</span>
@@ -343,12 +361,12 @@ const Registration = () => {
                                                 {...register('role', { required: 'Please select a role' })}
                                                 type="radio"
                                                 value="buyer"
-                                                className="sr-only peer" // Added peer class
+                                                className="sr-only peer"
                                             />
                                             <div
                                                 className={`p-4 bg-white/10 border-2 rounded-xl hover:bg-white/20 transition-all duration-300 text-center flex flex-col items-center justify-center h-full
-                          ${selectedRole === 'buyer' ? 'border-blue-400 bg-blue-500/20 shadow-xl scale-[1.03] animate-pulse-once' : 'border-white/20'}
-                        `}
+                                        ${selectedRole === 'buyer' ? 'border-blue-400 bg-blue-500/20 shadow-xl scale-[1.03] animate-pulse-once' : 'border-white/20'}
+                                    `}
                                             >
                                                 <FaShoppingCart className="text-3xl text-purple-300 mb-2" />
                                                 <span className="text-white font-medium text-lg">Buyer</span>
@@ -398,8 +416,8 @@ const Registration = () => {
                                             <div className="flex items-center justify-between text-sm">
                                                 <span className="text-purple-200">Password Strength:</span>
                                                 <span className={`font-medium ${passwordStrength <= 2 ? 'text-red-400' :
-                                                        passwordStrength <= 3 ? 'text-yellow-400' :
-                                                            passwordStrength <= 4 ? 'text-blue-400' : 'text-green-400'
+                                                    passwordStrength <= 3 ? 'text-yellow-400' :
+                                                        passwordStrength <= 4 ? 'text-blue-400' : 'text-green-400'
                                                     }`}>
                                                     {getPasswordStrengthText()}
                                                 </span>
@@ -478,16 +496,40 @@ const Registration = () => {
                                 </motion.button>
                             </form>
 
-                            <motion.p
+                            {/* Separator */}
+                            <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.6, delay: 1.4 }}
+                                className="my-6 flex items-center before:flex-1 before:border-t before:border-gray-600 after:flex-1 after:border-t after:border-gray-600"
+                            >
+                                <p className="text-center font-semibold mx-4 mb-0 text-white">OR</p>
+                            </motion.div>
+
+                            {/* Sign up with Google Button */}
+                            <motion.button
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 1.5 }}
+                                type="button"
+                                onClick={handleGoogleSignUp}
+                                disabled={isLoading}
+                                className="w-full py-3 flex items-center justify-center bg-white/10 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-lg"
+                            >
+                                <FaGoogle className="mr-2 text-red-400" />
+                                {isLoading ? 'Processing...' : 'Sign up with Google'}
+                            </motion.button>
+
+                            <motion.p
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 1.6 }}
                                 className="text-center text-purple-200 mt-6"
                             >
                                 Already have an account?{' '}
-                                <a href="/login" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
+                                <Link to="/login" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
                                     Sign in
-                                </a>
+                                </Link>
                             </motion.p>
                         </div>
                     </motion.div>
