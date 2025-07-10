@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { use, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Lottie from 'lottie-react';
 import Swal from 'sweetalert2';
-import { Link, useNavigate } from 'react-router';
+import { Link, Navigate, useNavigate } from 'react-router'; // Changed to react-router-dom
 import {
     FaEnvelope,
     FaLock,
@@ -16,82 +15,89 @@ import {
 } from 'react-icons/fa';
 import { Briefcase } from 'lucide-react';
 import loginLottie from '../../assets/Lottie/login-lottie.json';
+import { AuthContext } from '../../Provider/AuthProvider';
 
 const Login = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+
+    const { signIn, signInWithGoogle } = use(AuthContext)
     const navigate = useNavigate();
 
-    const {
-        register,
-        handleSubmit,
-        watch,
-        formState: { errors },
-        setError,
-        clearErrors
-    } = useForm();
 
-    const email = watch('email');
 
     // Simulate checking for existing email
-    React.useEffect(() => {
+    useEffect(() => {
         if (email && email.includes('@')) {
-            // Simulate API call to check if email exists
             const timeout = setTimeout(() => {
                 if (email === 'notfound@example.com') {
-                    setError('email', {
-                        type: 'manual',
-                        message: 'No account found with this email address'
-                    });
+                    setEmailError('No account found with this email address');
                 } else {
-                    clearErrors('email');
+                    setEmailError('');
                 }
             }, 500);
 
             return () => clearTimeout(timeout);
+        } else if (email === '') {
+            setEmailError('');
         }
-    }, [email, setError, clearErrors]);
+    }, [email]);
 
-    const onSubmit = async (data) => {
+    const validateForm = () => {
+        let isValid = true;
+        // Email validation
+        if (!email) {
+            setEmailError('Email is required');
+            isValid = false;
+        } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email)) {
+            setEmailError('Invalid email address');
+            isValid = false;
+        } else {
+            setEmailError('');
+        }
+
+        // Password validation
+        if (!password) {
+            setPasswordError('Password is required');
+            isValid = false;
+        } else if (password.length < 6) {
+            setPasswordError('Password must be at least 6 characters');
+            isValid = false;
+        } else {
+            setPasswordError('');
+        }
+        return isValid;
+    };
+
+    const handleLogin = async (e) => {
+        e.preventDefault(); // Prevent default form submission
+
+        if (!validateForm()) {
+            return;
+        }
+
         setIsLoading(true);
 
         try {
             // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
 
-            // Simulate login validation
-            if (data.email === 'admin@example.com' && data.password === 'password123') {
-                Swal.fire({
-                    title: 'Login Successful!',
-                    text: 'Welcome back! Redirecting to dashboard...',
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false,
-                    confirmButtonColor: '#8B5CF6'
-                });
-
-                // Redirect to dashboard after success
-                setTimeout(() => {
-                    navigate('/dashboard');
-                }, 2000);
-            } else {
-                // Show error for incorrect credentials
-                setError('password', {
-                    type: 'manual',
-                    message: 'Invalid email or password'
-                });
-
-                Swal.fire({
-                    title: 'Login Failed',
-                    text: 'Invalid email or password. Please try again.',
-                    icon: 'error',
-                    confirmButtonText: 'Try Again',
-                    confirmButtonColor: '#8B5CF6'
-                });
-            }
+            await signIn(email, password)
+            Swal.fire({
+                title: 'Login Successful!',
+                text: 'Welcome back! Redirecting to dashboard...',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false,
+                confirmButtonColor: '#8B5CF6'
+            });
+            navigate("/")
         } catch (error) {
-            console.log(error);
+            console.error(error); // Changed to console.error for better error logging
             Swal.fire({
                 title: 'Error',
                 text: 'Something went wrong. Please try again.',
@@ -106,10 +112,9 @@ const Login = () => {
 
     const handleGoogleSignIn = async () => {
         setIsGoogleLoading(true);
-
         try {
             // Simulate Google Sign-In API call
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            await signInWithGoogle()
 
             Swal.fire({
                 title: 'Google Sign-In Successful!',
@@ -119,13 +124,10 @@ const Login = () => {
                 showConfirmButton: false,
                 confirmButtonColor: '#8B5CF6'
             });
+            navigate("/")
 
-            // Redirect to dashboard after success
-            setTimeout(() => {
-                navigate('/dashboard');
-            }, 2000);
         } catch (error) {
-            console.log(error);
+            console.error(error); // Changed to console.error
             Swal.fire({
                 title: 'Google Sign-In Failed',
                 text: 'Unable to sign in with Google. Please try again.',
@@ -137,7 +139,6 @@ const Login = () => {
             setIsGoogleLoading(false);
         }
     };
-
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
             <motion.div
@@ -261,38 +262,35 @@ const Login = () => {
                                 </div>
                             </motion.div>
 
-                            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                            <form onSubmit={handleLogin} className="space-y-6">
                                 {/* Email Field */}
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.6, delay: 0.9 }}
                                 >
-                                    <label className="block text-white text-sm font-medium mb-2">
+                                    <label htmlFor="email" className="block text-white text-sm font-medium mb-2">
                                         Email Address
                                     </label>
                                     <div className="relative">
                                         <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-300" />
                                         <input
-                                            {...register('email', {
-                                                required: 'Email is required',
-                                                pattern: {
-                                                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                                                    message: 'Invalid email address'
-                                                }
-                                            })}
+                                            id="email"
                                             type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            onBlur={validateForm} // Validate on blur
                                             className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
                                             placeholder="Enter your email"
                                         />
-                                        {email && !errors.email && (
+                                        {email && !emailError && (
                                             <FaCheck className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-400" />
                                         )}
                                     </div>
-                                    {errors.email && (
+                                    {emailError && (
                                         <p className="text-red-400 text-sm mt-1 flex items-center">
                                             <FaTimes className="mr-1" />
-                                            {errors.email.message}
+                                            {emailError}
                                         </p>
                                     )}
                                 </motion.div>
@@ -303,17 +301,17 @@ const Login = () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.6, delay: 1.0 }}
                                 >
-                                    <label className="block text-white text-sm font-medium mb-2">
+                                    <label htmlFor="password" className="block text-white text-sm font-medium mb-2">
                                         Password
                                     </label>
                                     <div className="relative">
                                         <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-300" />
                                         <input
-                                            {...register('password', {
-                                                required: 'Password is required',
-                                                minLength: { value: 6, message: 'Password must be at least 6 characters' }
-                                            })}
+                                            id="password"
                                             type={showPassword ? 'text' : 'password'}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            onBlur={validateForm} // Validate on blur
                                             className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
                                             placeholder="Enter your password"
                                         />
@@ -325,10 +323,10 @@ const Login = () => {
                                             {showPassword ? <FaEyeSlash /> : <FaEye />}
                                         </button>
                                     </div>
-                                    {errors.password && (
+                                    {passwordError && (
                                         <p className="text-red-400 text-sm mt-1 flex items-center">
                                             <FaTimes className="mr-1" />
-                                            {errors.password.message}
+                                            {passwordError}
                                         </p>
                                     )}
                                 </motion.div>
@@ -370,8 +368,6 @@ const Login = () => {
                                     )}
                                 </motion.button>
                             </form>
-
-                            {/* Demo Credentials */}
 
                             <motion.p
                                 initial={{ opacity: 0, y: 20 }}
