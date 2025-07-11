@@ -5,7 +5,7 @@ import videoSrc from "../../assets/hero-slider.mp4"
 
 const Hero = () => {
   return (
-    <section className="relative h-[90vh] w-full overflow-hidden">
+    <section className="relative h-[80vh] w-full overflow-hidden">
       {/* Background Video */}
       <div className="absolute inset-0 z-0">
         <video
