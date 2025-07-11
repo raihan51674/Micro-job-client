@@ -17,7 +17,7 @@ import {
     FaGoogle // Import Google icon
 } from 'react-icons/fa';
 import registrationLotti from '../../assets/Lottie/registration-lottie.json';
-import { Link } from 'react-router'; // Changed to react-router-dom for proper Link usage
+import { Link, useNavigate } from 'react-router';
 import { AuthContext } from '../../Provider/AuthProvider';
 
 const Registration = () => {
@@ -25,10 +25,9 @@ const Registration = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [profilePreview, setProfilePreview] = useState(null);
     const [passwordStrength, setPasswordStrength] = useState(0);
-    const [isLoading, setIsLoading] = useState(false);
 
     const { createUser, signInWithGoogle, updateUserProfile, loading } = useContext(AuthContext)
-
+    const navigate = useNavigate()
 
 
     const {
@@ -96,7 +95,6 @@ const Registration = () => {
     };
 
     const onSubmit = async (data) => {
-        setIsLoading(true);
         // Simulate API call
         const result = await createUser(email, password);
 
@@ -106,7 +104,6 @@ const Registration = () => {
             'https://lh3.googleusercontent.com/a/ACg8ocKUMU3XIX-JSUB80Gj_bYIWfYudpibgdwZE1xqmAGxHASgdvCZZ=s96-c'
         )
         console.log(result?.user);
-        setIsLoading(false);
 
         Swal.fire({
             title: 'Registration Successful!',
@@ -115,21 +112,28 @@ const Registration = () => {
             confirmButtonText: 'Continue',
             confirmButtonColor: '#8B5CF6'
         });
+        navigate("/")
     };
 
     const handleGoogleSignUp = async () => {
-        setIsLoading(true);
-        console.log('Signing up with Google...');
-        // Simulate Google sign-up process
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setIsLoading(false);
-        Swal.fire({
-            title: 'Google Sign-up Initiated!',
-            text: 'You would typically be redirected to Google for authentication here.',
-            icon: 'info',
-            confirmButtonText: 'OK',
-            confirmButtonColor: '#8B5CF6'
-        });
+
+        try {
+            await signInWithGoogle()
+            navigate("/")
+            Swal.fire({
+                title: 'Google Sign-up Initiated!',
+                text: 'You would typically be redirected to Google for authentication here.',
+                icon: 'info',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#8B5CF6'
+            });
+        } catch (error) {
+            Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: `${error?.message}`,
+            });
+        }
         // Here you would integrate with Firebase, Auth0, or your backend for Google OAuth
     };
 
@@ -492,10 +496,10 @@ const Registration = () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.6, delay: 1.3 }}
                                     type="submit"
-                                    disabled={isLoading}
+                                    disabled={loading}
                                     className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-lg"
                                 >
-                                    {isLoading ? (
+                                    {loading ? (
                                         <div className="flex items-center justify-center">
                                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                                             Creating Account...
@@ -523,11 +527,11 @@ const Registration = () => {
                                 transition={{ duration: 0.6, delay: 1.5 }}
                                 type="button"
                                 onClick={handleGoogleSignUp}
-                                disabled={isLoading}
+                                disabled={loading}
                                 className="w-full py-3 flex items-center justify-center bg-white/10 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-lg"
                             >
                                 <FaGoogle className="mr-2 text-red-400" />
-                                {isLoading ? 'Processing...' : 'Sign up with Google'}
+                                {loading ? 'Processing...' : 'Sign up with Google'}
                             </motion.button>
 
                             <motion.p

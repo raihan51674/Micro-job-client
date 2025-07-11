@@ -1,26 +1,26 @@
 import React, { useContext, useState } from 'react';
 import { Menu, X, Code, LogIn, UserPlus, Briefcase, LayoutDashboard, Wallet, UserCircle, LogOut } from 'lucide-react';
-import { Link } from 'react-router'; // Changed to react-router-dom for web applications
-import { AuthContext } from '../Provider/AuthProvider';
+import { Link } from 'react-router'; // Ensure this is react-router-dom for web apps
+import { AuthContext } from '../Provider/AuthProvider'; // Make sure this path is correct
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // This availableCoin should ideally come from your user context or fetched data, not a fixed state here.
+  const [availableCoin, setAvailableCoin] = useState(120.50);
 
-  const [availableCoin, setAvailableCoin] = useState(120.50); // Simulate available coin
+  const { logOut, user } = useContext(AuthContext); // Get user and logOut from AuthContext
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const { logOut, user } = useContext(AuthContext)
-
   const handleLogout = () => {
-    // Simulate logout logic
-    logOut()
+    logOut(); 
+    toggleMenu();
   };
 
   return (
-    <nav className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-2xl sticky top-0 z-50 border-b border-white/10">
+    <nav className="bg-black bg-opacity-40 backdrop-blur-lg shadow-2xl sticky top-0 z-50 border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo and Brand - Always visible */}
@@ -40,7 +40,7 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:block">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-4"> {/* Increased space-x for better separation */}
               {user ? (
                 <>
                   <Link
@@ -53,31 +53,46 @@ const Navbar = () => {
                     </span>
                   </Link>
 
+                  {/* Available Coin Display */}
                   <div className="flex items-center px-4 py-3 bg-white/10 backdrop-blur-sm text-white rounded-xl border border-white/20">
                     <Wallet className="h-4 w-4 mr-2 text-green-400" />
                     <span className="font-medium">Coins: {availableCoin.toFixed(2)}</span>
                   </div>
 
-                  {/* User Profile and Logout Button - Can be a dropdown in a real app */}
-                  <Link
-                    to="/profile"
-                    className="group relative px-4 py-3 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 rounded-xl transition-all duration-300 ease-in-out transform hover:scale-[1.02] border border-white/20 hover:border-white/30"
-                  >
-                    <span className="relative z-10 flex items-center space-x-2 font-medium">
-                      <UserCircle className="h-4 w-4" />
-                      <span>Profile</span>
-                    </span>
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="group relative px-4 py-3 bg-red-600/80 backdrop-blur-sm text-white hover:bg-red-700 rounded-xl transition-all duration-300 ease-in-out transform hover:scale-[1.02] border border-red-500/20 hover:border-red-500/30"
-                  >
-                    <span className="relative z-10 flex items-center space-x-2 font-medium">
-                      <LogOut className="h-4 w-4" />
-                      <span>Logout</span>
-                    </span>
-                  </button>
+                  {/* User Profile and Logout Button */}
+                  <div className="relative group">
+                    <button className="flex items-center space-x-2 px-3 py-2 bg-white/10 backdrop-blur-sm text-white rounded-full transition-all duration-300 ease-in-out transform hover:scale-[1.02] border border-white/20 hover:border-white/30">
+                      {user.photoURL ? (
+                        <img
+                          src={user.photoURL}
+                          alt="User Avatar"
+                          className="h-8 w-8 rounded-full object-cover border-2 border-purple-400"
+                        />
+                      ) : (
+                        <UserCircle className="h-8 w-8 text-purple-400" />
+                      )}
+                      <span className="font-medium">{user.displayName || "User"}</span>
+                    </button>
+                    {/* Dropdown for Profile and Logout */}
+                    <div className="absolute right-0 mt-2 w-48 bg-black/70 backdrop-blur-md rounded-lg shadow-xl py-1 z-20 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transform scale-95 group-hover:scale-100 transition-all duration-200 origin-top-right">
+                      <Link
+                        to="/profile"
+                        className="flex items-center px-4 py-2 text-white/90 hover:bg-white/10 hover:text-white transition-colors duration-150"
+                      >
+                        <UserCircle className="h-5 w-5 mr-3" />
+                        Profile
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full text-left px-4 py-2 text-red-400 hover:bg-red-600/20 hover:text-red-300 transition-colors duration-150 rounded-b-lg"
+                      >
+                        <LogOut className="h-5 w-5 mr-3" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
 
+                  {/* Join as Developer Button */}
                   <a
                     href="https://github.com/your-client-repo" // Replace with actual GitHub repo URL
                     target="_blank"
@@ -150,9 +165,26 @@ const Navbar = () => {
       {/* Mobile Navigation Menu */}
       <div className={`md:hidden transition-all duration-500 ease-in-out ${isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
         } overflow-hidden`}>
-        <div className="px-4 pt-4 pb-6 space-y-3 bg-gradient-to-b from-black/20 to-black/40 backdrop-blur-lg border-t border-white/10">
+        <div className="px-4 pt-4 pb-6 space-y-3 bg-black/50 backdrop-blur-md border-t border-white/10">
           {user ? (
             <>
+              {/* Profile Info in Mobile */}
+              <div className="flex items-center space-x-3 px-4 py-3 bg-white/5 rounded-xl border border-white/10">
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt="User Avatar"
+                    className="h-10 w-10 rounded-full object-cover border-2 border-purple-400"
+                  />
+                ) : (
+                  <UserCircle className="h-10 w-10 text-purple-400" />
+                )}
+                <div className="flex flex-col">
+                  <span className="font-bold text-white">{user.displayName || "User"}</span>
+                  <span className="text-sm text-purple-300">{user.email}</span>
+                </div>
+              </div>
+
               <Link
                 to="/dashboard"
                 onClick={toggleMenu} // Close menu on navigation
