@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Menu, X } from 'lucide-react'; // Icons for navigation
-import { NavLink, useNavigate } from 'react-router';
+import { LayoutDashboard, ArrowRightCircle, X, Briefcase } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router'; // Fixed to react-router-dom
 
 import toast from 'react-hot-toast';
 import { AuthContext } from '../../../Provider/AuthProvider';
@@ -10,90 +10,99 @@ import BuyerNavigation from '../../../Component/DashboardNav/BuyerNavigation/Buy
 import AdminNavigation from '../../../Component/DashboardNav/AdminNavigation/AdminNavigation';
 
 const DashboardAside = () => {
-
-
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const { logOut } = useContext(AuthContext)
+    const { logOut } = useContext(AuthContext);
     const navigate = useNavigate();
+
 
     const logout = () => {
         logOut();
-        toast.success('Successfully Logout!')
-        navigate("/")
-    }
+        toast.success('Successfully Logout!');
+        navigate("/");
+    };
+
+    const handleNavigationClick = () => {
+        if (window.innerWidth < 768) {
+            setIsSidebarOpen(false);
+        }
+    };
 
     return (
-        <div>
-            {/* Mobile Header / Navbar */}
-            {/* Sidebar - Desktop */}
-            <aside
-                className="hidden md:flex flex-col w-64 bg-black/30 backdrop-blur-md border-r border-white/10 p-6 shadow-lg relative z-20"
-                style={{
-                    minHeight: '100vh',
-                    background: 'rgba(255, 255, 255, 0.05)', // Lighter glassy effect for sidebar
-                    backdropFilter: 'blur(15px) brightness(1.1)',
-                    WebkitBackdropFilter: 'blur(15px) brightness(1.1)',
-                    borderRight: '1px solid rgba(255, 255, 255, 0.1)',
-                }}
-            >
+        <div className=" flex flex-col text-gray-100"
+            style={{
+                background: 'radial-gradient(circle at center, #0d1117, #0d1117 80%, #1a202c)',
+            }}
+        >
+            {/* Mobile Sidebar Toggle Button */}
+            {!isSidebarOpen && (
+                <motion.button
+                    initial={{ x: -50, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: -50, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="fixed top-20 left-6 p-2 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg z-40 md:hidden text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-label="Open sidebar"
+                >
+                    <ArrowRightCircle className="h-6 w-6" />
+                </motion.button>
+            )}
 
-                {/* Navigation */}
-                <nav className="flex-1">
-                    <ul className="space-y-3">
-                        {/* Home navlink */}
-                        <li>
-                            <motion.div
-                                whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.1)' }}
-                                whileTap={{ scale: 0.98 }}
-                                className="flex items-center p-3 rounded-lg transition-colors duration-200 cursor-pointer group"
-                                style={{
-                                    background: 'rgba(255, 255, 255, 0.02)', // Slightly transparent initial background
-                                    backdropFilter: 'blur(5px)',
-                                    WebkitBackdropFilter: 'blur(5px)',
-                                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                                }}
-                            >
-                                <NavLink
-                                    to="/dashboard" // Use 'to' prop for react-router-dom
-                                    className={({ isActive }) =>
-                                        `flex items-center w-full h-full text-gray-300
-                                            ${isActive ? 'text-blue-400 font-semibold' : 'hover:text-blue-400'}`
-                                    }
+            <div className="flex flex-1">
+                {/* Desktop Sidebar */}
+                <aside
+                    className="hidden md:flex flex-col w-64 bg-black/30 backdrop-blur-md border-r border-white/10 p-6 shadow-lg relative z-20 h-full"
+                    style={{
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        backdropFilter: 'blur(15px) brightness(1.1)',
+                        WebkitBackdropFilter: 'blur(15px) brightness(1.1)',
+                        borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+                    }}
+                >
+
+                    {/* Navigation */}
+                    <nav className="flex-1">
+                        <ul className="space-y-3">
+                            <li>
+                                <motion.div
+                                    whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="flex items-center p-3 rounded-lg transition-colors duration-200 cursor-pointer group"
+                                    style={{
+                                        background: 'rgba(255, 255, 255, 0.02)',
+                                        backdropFilter: 'blur(5px)',
+                                        WebkitBackdropFilter: 'blur(5px)',
+                                        border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    }}
                                 >
-                                    <LayoutDashboard className="h-5 w-5 mr-3 text-purple-400 group-hover:text-blue-400 transition-colors duration-200" />
-                                    <span className="font-medium">Home</span>
-                                </NavLink>
-                            </motion.div>
-                        </li>
-                        {/* Removed role-based navigation components */}
-                        <WorkerNavigation></WorkerNavigation>
-                        <BuyerNavigation></BuyerNavigation>
-                        <AdminNavigation></AdminNavigation>
-                    </ul>
-                </nav>
+                                    <NavLink
+                                        to="/dashboard"
+                                        className={({ isActive }) =>
+                                            `flex items-center w-full h-full text-gray-300 ${isActive ? 'text-blue-400 font-semibold' : 'hover:text-blue-400'}`
+                                        }
+                                    >
+                                        <LayoutDashboard className="h-5 w-5 mr-3 text-purple-400 group-hover:text-blue-400 transition-colors duration-200" />
+                                        <span className="font-medium">Home</span>
+                                    </NavLink>
+                                </motion.div>
+                            </li>
+                            <WorkerNavigation />
+                            <BuyerNavigation />
+                            <AdminNavigation />
+                        </ul>
+                    </nav>
 
-                {/* User Info / Footer in Sidebar */}
-                <div className="mt-auto pt-6 border-t border-white/10 text-center">
-                    <p className="text-sm text-gray-400">Logged in as: <span className="font-semibold capitalize">{"userRole"}</span></p>
-                    <button onClick={logout} className="mt-3 px-4 py-2 text-sm bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
-                        Logout
-                    </button>
-                </div>
-            </aside>
-            <header
-                className="md:hidden bg-black/30 backdrop-blur-md border-b border-white/10 p-4 flex justify-between items-center relative z-20"
-                style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    backdropFilter: 'blur(15px) brightness(1.1)',
-                    WebkitBackdropFilter: 'blur(15px) brightness(1.1)',
-                }}
-            >
-                <button onClick={() => setIsSidebarOpen(true)} className="text-gray-300">
-                    <Menu className="h-7 w-7" />
-                </button>
-            </header>
+                    {/* Footer */}
+                    <div className="mt-auto pt-6 border-t border-white/10 text-center">
+                        
+                        <button onClick={logout} className="mt-3 px-4 py-2 text-sm bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                            Logout
+                        </button>
+                    </div>
+                </aside>
+            </div>
 
-            {/* Mobile Sidebar Overlay */}
+            {/* Mobile Sidebar */}
             <AnimatePresence>
                 {isSidebarOpen && (
                     <motion.div
@@ -101,49 +110,54 @@ const DashboardAside = () => {
                         animate={{ x: 0 }}
                         exit={{ x: '-100%' }}
                         transition={{ type: 'tween', duration: 0.3, ease: 'easeOut' }}
-                        className="fixed inset-0 bg-black/50 z-50 md:hidden" // Dark overlay
-                        onClick={() => setIsSidebarOpen(false)} // Close when clicking outside
+                        className="fixed inset-0 bg-black/50 z-50 md:hidden"
+                        onClick={() => setIsSidebarOpen(false)}
                     >
                         <motion.aside
-                            initial={{ x: '-100%' }} // Initial position for the sidebar itself
+                            initial={{ x: '-100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '-100%' }}
                             transition={{ type: 'tween', duration: 0.3, ease: 'easeOut' }}
-                            className="flex flex-col w-64 h-full bg-black/60 backdrop-blur-xl p-6 border-r border-white/20"
+                            className="flex flex-col w-64 h-full bg-black/60 backdrop-blur-xl p-6 border-r border-white/20 overflow-y-auto"
                             style={{
                                 background: 'rgba(255, 255, 255, 0.08)',
                                 backdropFilter: 'blur(20px) brightness(1.2)',
                                 WebkitBackdropFilter: 'blur(20px) brightness(1.2)',
                             }}
-                            onClick={e => e.stopPropagation()} // Prevent closing sidebar when clicking inside it
+                            onClick={e => e.stopPropagation()}
                         >
+                            {/* Header */}
                             <div className="flex justify-between items-center mb-10 mt-2">
-
-                                <button onClick={() => setIsSidebarOpen(false)} className="text-gray-300">
+                                
+                                <button
+                                    onClick={() => setIsSidebarOpen(false)}
+                                    className="text-gray-300 hover:text-blue-400 p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    aria-label="Close sidebar"
+                                >
                                     <X className="h-7 w-7" />
                                 </button>
                             </div>
 
+                            {/* Navigation */}
                             <nav className="flex-1">
                                 <ul className="space-y-3">
-                                    {/* Home navlink */}
                                     <li>
                                         <motion.div
                                             whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.1)' }}
                                             whileTap={{ scale: 0.98 }}
                                             className="flex items-center p-3 rounded-lg transition-colors duration-200 cursor-pointer group"
                                             style={{
-                                                background: 'rgba(255, 255, 255, 0.02)', // Slightly transparent initial background
+                                                background: 'rgba(255, 255, 255, 0.02)',
                                                 backdropFilter: 'blur(5px)',
                                                 WebkitBackdropFilter: 'blur(5px)',
                                                 border: '1px solid rgba(255, 255, 255, 0.08)',
                                             }}
+                                            onClick={handleNavigationClick}
                                         >
                                             <NavLink
-                                                to="/dashboard" // Use 'to' prop for react-router-dom
+                                                to="/dashboard"
                                                 className={({ isActive }) =>
-                                                    `flex items-center w-full h-full text-gray-300
-                                                            ${isActive ? 'text-blue-400 font-semibold' : 'hover:text-blue-400'}`
+                                                    `flex items-center w-full h-full text-gray-300 ${isActive ? 'text-blue-400 font-semibold' : 'hover:text-blue-400'}`
                                                 }
                                             >
                                                 <LayoutDashboard className="h-5 w-5 mr-3 text-purple-400 group-hover:text-blue-400 transition-colors duration-200" />
@@ -151,16 +165,15 @@ const DashboardAside = () => {
                                             </NavLink>
                                         </motion.div>
                                     </li>
-                                    {/* Removed role-based navigation components */}
-                                    <WorkerNavigation></WorkerNavigation>
-                                    <BuyerNavigation></BuyerNavigation>
-                                    <AdminNavigation></AdminNavigation>
-
+                                    <WorkerNavigation />
+                                    {/* <BuyerNavigation />
+                                    <AdminNavigation /> */}
                                 </ul>
                             </nav>
 
+                            {/* Footer */}
                             <div className="mt-auto pt-6 border-t border-white/10 text-center">
-                                <p className="text-sm text-gray-400">Logged in as: <span className="font-semibold capitalize">{"userRole"}</span></p>
+                                
                                 <button onClick={logout} className="mt-3 px-4 py-2 text-sm bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
                                     Logout
                                 </button>
