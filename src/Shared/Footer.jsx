@@ -1,5 +1,3 @@
-// src/components/Footer.jsx
-"use client"; // Necessary for Next.js 13+ App Router to make this a client component
 
 import React from 'react';
 import { motion } from 'framer-motion';

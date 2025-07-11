@@ -1,5 +1,4 @@
-// src/components/FAQ.jsx
-"use client"; // Necessary for Next.js 13+ App Router to make this a client component
+
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
