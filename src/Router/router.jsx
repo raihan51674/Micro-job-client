@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router";
 import RootLayout from "../RootLayout/RootLayout";
 import Registration from "../Pages/Registration/Registration";
 import Login from "../Pages/Login/Login";
+import Home from "../Pages/Home/Home";
 
 
 
@@ -16,7 +17,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <p>Helllo coder</p>
+        element: <Home></Home>
       },
       {
         path: "/register",
