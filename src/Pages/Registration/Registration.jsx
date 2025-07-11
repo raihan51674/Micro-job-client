@@ -1,6 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { motion } from 'framer-motion';
 import Lottie from 'lottie-react';
 import Swal from 'sweetalert2';
 import {
@@ -14,7 +13,7 @@ import {
     FaShoppingCart,
     FaCheck,
     FaTimes,
-    FaGoogle // Import Google icon
+    FaGoogle
 } from 'react-icons/fa';
 import registrationLotti from '../../assets/Lottie/registration-lottie.json';
 import { Link, useNavigate } from 'react-router';
@@ -26,9 +25,8 @@ const Registration = () => {
     const [profilePreview, setProfilePreview] = useState(null);
     const [passwordStrength, setPasswordStrength] = useState(0);
 
-    const { createUser, signInWithGoogle, updateUserProfile, loading } = useContext(AuthContext)
-    const navigate = useNavigate()
-
+    const { createUser, signInWithGoogle, updateUserProfile, loading, setUser } = useContext(AuthContext);
+    const navigate = useNavigate();
 
     const {
         register,
@@ -50,7 +48,7 @@ const Registration = () => {
             let strength = 0;
             if (password.length >= 8) strength++;
             if (/[A-Z]/.test(password)) strength++;
-            if (/S[a-z]/.test(password)) strength++;
+            if (/[a-z]/.test(password)) strength++;
             if (/[0-9]/.test(password)) strength++;
             if (/[^A-Za-z0-9]/.test(password)) strength++;
             setPasswordStrength(strength);
@@ -59,25 +57,10 @@ const Registration = () => {
         }
     }, [password]);
 
-    // Email validation
-    useEffect(() => {
-        if (email && email.includes('@')) {
-            // Simulate checking for existing email
-            if (email === 'test@example.com') {
-                setError('email', {
-                    type: 'manual',
-                    message: 'This email is already registered'
-                });
-            } else {
-                clearErrors('email');
-            }
-        }
-    }, [email, setError, clearErrors]);
-
     const handleFileChange = (e) => {
         const file = e.target.files?.[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+            if (file.size > 5 * 1024 * 1024) {
                 setError('profilePicture', {
                     type: 'manual',
                     message: 'File size must be less than 5MB'
@@ -95,46 +78,58 @@ const Registration = () => {
     };
 
     const onSubmit = async (data) => {
-        // Simulate API call
-        const result = await createUser(email, password);
+        try {
+            await createUser(email, password)
+                .then((result) => {
+                    const user = result?.user;
+                    updateUserProfile(
+                        data?.name,
+                        'https://lh3.googleusercontent.com/a/ACg8ocKUMU3XIX-JSUB80Gj_bYIWfYudpibgdwZE1xqmAGxHASgdvCZZ=s96-c'
+                    )
+                        .then(() => {
+                            setUser({ ...user, displayName: data?.name, photoURL: 'https://lh3.googleusercontent.com/a/ACg8ocKUMU3XIX-JSUB80Gj_bYIWfYudpibgdwZE1xqmAGxHASgdvCZZ=s96-c' })
+                        })
+                        .catch(error => {
+                            console.log(error);
+                        })
+                })
 
-
-        await updateUserProfile(
-            data?.name,
-            'https://lh3.googleusercontent.com/a/ACg8ocKUMU3XIX-JSUB80Gj_bYIWfYudpibgdwZE1xqmAGxHASgdvCZZ=s96-c'
-        )
-        console.log(result?.user);
-
-        Swal.fire({
-            title: 'Registration Successful!',
-            text: `Welcome ${data.name}! Your account has been created successfully as a ${data.role}.`,
-            icon: 'success',
-            confirmButtonText: 'Continue',
-            confirmButtonColor: '#8B5CF6'
-        });
-        navigate("/")
+            Swal.fire({
+                title: 'Registration Successful!',
+                text: `Welcome ${data.name}! Your account has been created as a ${data.role}.`,
+                icon: 'success',
+                confirmButtonText: 'Continue',
+                confirmButtonColor: '#8B5CF6'
+            });
+            navigate("/");
+        } catch (error) {
+            console.log(error);
+            Swal.fire({
+                icon: "error",
+                title: "Registration Failed",
+                text: error.message || "Something went wrong during registration.",
+            });
+        }
     };
 
     const handleGoogleSignUp = async () => {
-
         try {
-            await signInWithGoogle()
-            navigate("/")
+            await signInWithGoogle();
+            navigate("/");
             Swal.fire({
-                title: 'Google Sign-up Initiated!',
-                text: 'You would typically be redirected to Google for authentication here.',
-                icon: 'info',
+                title: 'Google Sign-up Successful!',
+                text: 'You have successfully signed in with Google.',
+                icon: 'success',
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#8B5CF6'
             });
         } catch (error) {
             Swal.fire({
                 icon: "error",
-                title: "Oops...",
-                text: `${error?.message}`,
+                title: "Google Sign-up Failed",
+                text: error.message || "Something went wrong with Google sign-up.",
             });
         }
-        // Here you would integrate with Firebase, Auth0, or your backend for Google OAuth
     };
 
     const getPasswordStrengthColor = () => {
@@ -162,23 +157,12 @@ const Registration = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4 font-sans">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="w-full max-w-6xl bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden border border-white/20"
-            >
+        <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4 font-sans">
+            <div className="w-full max-w-6xl bg-black bg-opacity-50 backdrop-blur-lg rounded-xl shadow-xl overflow-hidden border border-gray-700">
                 <div className="flex flex-col lg:flex-row">
                     {/* Left Side - Lottie Animation */}
-                    <motion.div
-                        initial={{ opacity: 0, x: -50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        className="lg:w-1/2 bg-gradient-to-br from-purple-600/20 to-blue-600/20 p-8 flex items-center justify-center relative overflow-hidden rounded-l-3xl lg:rounded-r-none rounded-b-3xl lg:rounded-bl-3xl"
-                    >
-
-                        <div className="text-center relative z-10">
+                    <div className="lg:w-1/2 bg-gray-800/70 p-8 flex items-center justify-center">
+                        <div className="text-center">
                             <div className="w-80 h-80 mx-auto mb-6">
                                 <Lottie
                                     animationData={registrationLotti}
@@ -186,70 +170,40 @@ const Registration = () => {
                                     className="w-full h-full"
                                 />
                             </div>
-                            <motion.h2
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, delay: 0.4 }}
-                                className="text-4xl font-bold text-white mb-4 drop-shadow-lg"
-                            >
-                                Join MicroJobs
-                            </motion.h2>
-                            <motion.p
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, delay: 0.6 }}
-                                className="text-purple-200 text-lg max-w-md mx-auto"
-                            >
-                                Create your account and start your professional journey today, connecting with opportunities.
-                            </motion.p>
+                            <h2 className="text-3xl font-bold text-white mb-4">
+                                Welcome Back
+                            </h2>
+                            <p className="text-gray-300 text-lg">
+                                Sign in to continue your professional journey
+                            </p>
                         </div>
-                    </motion.div>
+                    </div>
 
                     {/* Right Side - Registration Form */}
-                    <motion.div
-                        initial={{ opacity: 0, x: 50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.8, delay: 0.3 }}
-                        className="lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center"
-                    >
+                    <div className="lg:w-1/2 p-8 lg:p-10 flex flex-col justify-center bg-gray-900/30">
                         <div className="max-w-md mx-auto w-full">
-                            <motion.h1
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, delay: 0.5 }}
-                                className="text-4xl font-bold text-white mb-3"
-                            >
+                            <h1 className="text-3xl font-bold text-white mb-2">
                                 Create Account
-                            </motion.h1>
-                            <motion.p
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, delay: 0.6 }}
-                                className="text-purple-200 mb-8 text-lg"
-                            >
+                            </h1>
+                            <p className="text-gray-300 mb-6">
                                 Fill in your details to get started
-                            </motion.p>
+                            </p>
 
-                            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                                 {/* Name Field */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.6, delay: 0.7 }}
-                                >
-                                    <label htmlFor="name" className="block text-white text-sm font-medium mb-2">
+                                <div>
+                                    <label className="block text-gray-300 text-sm font-medium mb-2">
                                         Full Name
                                     </label>
                                     <div className="relative">
-                                        <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-300" />
+                                        <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-400" />
                                         <input
-                                            id="name"
                                             {...register('name', {
                                                 required: 'Name is required',
                                                 minLength: { value: 2, message: 'Name must be at least 2 characters' }
                                             })}
                                             type="text"
-                                            className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-base"
+                                            className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
                                             placeholder="Enter your full name"
                                         />
                                     </div>
@@ -259,21 +213,16 @@ const Registration = () => {
                                             {errors.name.message}
                                         </p>
                                     )}
-                                </motion.div>
+                                </div>
 
                                 {/* Email Field */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.6, delay: 0.8 }}
-                                >
-                                    <label htmlFor="email" className="block text-white text-sm font-medium mb-2">
+                                <div>
+                                    <label className="block text-gray-300 text-sm font-medium mb-2">
                                         Email Address
                                     </label>
                                     <div className="relative">
-                                        <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-300" />
+                                        <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-400" />
                                         <input
-                                            id="email"
                                             {...register('email', {
                                                 required: 'Email is required',
                                                 pattern: {
@@ -282,7 +231,7 @@ const Registration = () => {
                                                 }
                                             })}
                                             type="email"
-                                            className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-base"
+                                            className="w-full pl-10 pr-10 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
                                             placeholder="Enter your email"
                                         />
                                         {email && !errors.email && (
@@ -295,44 +244,36 @@ const Registration = () => {
                                             {errors.email.message}
                                         </p>
                                     )}
-                                </motion.div>
+                                </div>
 
                                 {/* Profile Picture Upload */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.6, delay: 0.9 }}
-                                >
-                                    <label htmlFor="profilePicture" className="block text-white text-sm font-medium mb-2">
+                                <div>
+                                    <label className="block text-gray-300 text-sm font-medium mb-2">
                                         Profile Picture
                                     </label>
-                                    <div className="relative">
-                                        <input
-                                            {...register('profilePicture', {
-                                                required: profilePreview ? false : 'Profile picture is required'
-                                            })}
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={handleFileChange}
-                                            className="hidden"
-                                            id="profilePicture"
-                                        />
-                                        <label
-                                            htmlFor="profilePicture"
-                                            className="w-full flex items-center justify-center px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-purple-200 hover:bg-white/20 transition-all duration-300 cursor-pointer text-base"
-                                        >
-                                            <FaUpload className="mr-2" />
-                                            {profilePreview ? 'Change Picture' : 'Upload Picture'}
-                                        </label>
-                                        {profilePreview && (
-                                            <div className="mt-3 flex justify-center">
-                                                <img
-                                                    src={profilePreview}
-                                                    alt="Profile Preview"
-                                                    className="w-20 h-20 rounded-full object-cover border-2 border-purple-400 shadow-md"
-                                                />
+                                    <div className="flex items-center space-x-4">
+                                        <label className="cursor-pointer">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleFileChange}
+                                                className="hidden"
+                                            />
+                                            <div className="w-16 h-16 rounded-full bg-gray-800 border-2 border-dashed border-gray-700 flex items-center justify-center overflow-hidden">
+                                                {profilePreview ? (
+                                                    <img src={profilePreview} alt="Preview" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <FaUpload className="text-gray-500" />
+                                                )}
                                             </div>
-                                        )}
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => document.querySelector('input[type="file"]').click()}
+                                            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors"
+                                        >
+                                            {profilePreview ? 'Change' : 'Upload'} Photo
+                                        </button>
                                     </div>
                                     {errors.profilePicture && (
                                         <p className="text-red-400 text-sm mt-1 flex items-center">
@@ -340,51 +281,45 @@ const Registration = () => {
                                             {errors.profilePicture.message}
                                         </p>
                                     )}
-                                </motion.div>
+                                </div>
 
                                 {/* Role Selection */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.6, delay: 1.0 }}
-                                >
-                                    <label className="block text-white text-sm font-medium mb-3">
+                                <div>
+                                    <label className="block text-gray-300 text-sm font-medium mb-2">
                                         Select Your Role
                                     </label>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {/* Worker Role */}
-                                        <label className="relative cursor-pointer" onClick={() => setValue('role', 'worker')}>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <label
+                                            className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all ${selectedRole === 'worker'
+                                                ? 'bg-purple-900/30 border border-purple-500'
+                                                : 'bg-gray-800 border border-gray-700 hover:bg-gray-700'
+                                                }`}
+                                            onClick={() => setValue('role', 'worker')}
+                                        >
                                             <input
                                                 {...register('role', { required: 'Please select a role' })}
                                                 type="radio"
                                                 value="worker"
-                                                className="sr-only peer"
+                                                className="text-purple-600"
                                             />
-                                            <div
-                                                className={`p-4 bg-white/10 border-2 rounded-xl hover:bg-white/20 transition-all duration-300 text-center flex flex-col items-center justify-center h-full
-                                        ${selectedRole === 'worker' ? 'border-purple-400 bg-purple-500/20 shadow-xl scale-[1.03] animate-pulse-once' : 'border-white/20'}
-                                    `}
-                                            >
-                                                <FaUserTie className="text-3xl text-purple-300 mb-2" />
-                                                <span className="text-white font-medium text-lg">Worker</span>
-                                            </div>
+                                            <FaUserTie className="text-purple-400 text-xl" />
+                                            <span className="text-white">Worker</span>
                                         </label>
-                                        {/* Buyer Role */}
-                                        <label className="relative cursor-pointer" onClick={() => setValue('role', 'buyer')}>
+                                        <label
+                                            className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all ${selectedRole === 'buyer'
+                                                ? 'bg-blue-900/30 border border-blue-500'
+                                                : 'bg-gray-800 border border-gray-700 hover:bg-gray-700'
+                                                }`}
+                                            onClick={() => setValue('role', 'buyer')}
+                                        >
                                             <input
                                                 {...register('role', { required: 'Please select a role' })}
                                                 type="radio"
                                                 value="buyer"
-                                                className="sr-only peer"
+                                                className="text-blue-600"
                                             />
-                                            <div
-                                                className={`p-4 bg-white/10 border-2 rounded-xl hover:bg-white/20 transition-all duration-300 text-center flex flex-col items-center justify-center h-full
-                                        ${selectedRole === 'buyer' ? 'border-blue-400 bg-blue-500/20 shadow-xl scale-[1.03] animate-pulse-once' : 'border-white/20'}
-                                    `}
-                                            >
-                                                <FaShoppingCart className="text-3xl text-purple-300 mb-2" />
-                                                <span className="text-white font-medium text-lg">Buyer</span>
-                                            </div>
+                                            <FaShoppingCart className="text-blue-400 text-xl" />
+                                            <span className="text-white">Buyer</span>
                                         </label>
                                     </div>
                                     {errors.role && (
@@ -393,34 +328,28 @@ const Registration = () => {
                                             {errors.role.message}
                                         </p>
                                     )}
-                                </motion.div>
+                                </div>
 
                                 {/* Password Field */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.6, delay: 1.1 }}
-                                >
-                                    <label htmlFor="password" className="block text-white text-sm font-medium mb-2">
+                                <div>
+                                    <label className="block text-gray-300 text-sm font-medium mb-2">
                                         Password
                                     </label>
                                     <div className="relative">
-                                        <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-300" />
+                                        <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-400" />
                                         <input
-                                            id="password"
                                             {...register('password', {
                                                 required: 'Password is required',
                                                 minLength: { value: 8, message: 'Password must be at least 8 characters' }
                                             })}
                                             type={showPassword ? 'text' : 'password'}
-                                            className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-base"
+                                            className="w-full pl-10 pr-12 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
                                             placeholder="Enter your password"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-300 hover:text-white transition-colors p-1"
-                                            aria-label={showPassword ? "Hide password" : "Show password"}
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white"
                                         >
                                             {showPassword ? <FaEyeSlash /> : <FaEye />}
                                         </button>
@@ -428,7 +357,7 @@ const Registration = () => {
                                     {password && (
                                         <div className="mt-2">
                                             <div className="flex items-center justify-between text-sm">
-                                                <span className="text-purple-200">Password Strength:</span>
+                                                <span className="text-gray-400">Password Strength:</span>
                                                 <span className={`font-medium ${passwordStrength <= 2 ? 'text-red-400' :
                                                     passwordStrength <= 3 ? 'text-yellow-400' :
                                                         passwordStrength <= 4 ? 'text-blue-400' : 'text-green-400'
@@ -436,11 +365,11 @@ const Registration = () => {
                                                     {getPasswordStrengthText()}
                                                 </span>
                                             </div>
-                                            <div className="w-full bg-gray-600 rounded-full h-2 mt-1">
+                                            <div className="w-full bg-gray-700 rounded-full h-1.5 mt-1">
                                                 <div
-                                                    className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor()}`}
+                                                    className={`h-1.5 rounded-full ${getPasswordStrengthColor()}`}
                                                     style={{ width: `${(passwordStrength / 5) * 100}%` }}
-                                                ></div>
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -450,34 +379,28 @@ const Registration = () => {
                                             {errors.password.message}
                                         </p>
                                     )}
-                                </motion.div>
+                                </div>
 
                                 {/* Confirm Password Field */}
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.6, delay: 1.2 }}
-                                >
-                                    <label htmlFor="confirmPassword" className="block text-white text-sm font-medium mb-2">
+                                <div>
+                                    <label className="block text-gray-300 text-sm font-medium mb-2">
                                         Confirm Password
                                     </label>
                                     <div className="relative">
-                                        <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-300" />
+                                        <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-400" />
                                         <input
-                                            id="confirmPassword"
                                             {...register('confirmPassword', {
                                                 required: 'Please confirm your password',
                                                 validate: value => value === password || 'Passwords do not match'
                                             })}
                                             type={showConfirmPassword ? 'text' : 'password'}
-                                            className="w-full pl-10 pr-12 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 text-base"
+                                            className="w-full pl-10 pr-12 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
                                             placeholder="Confirm your password"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-300 hover:text-white transition-colors p-1"
-                                            aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white"
                                         >
                                             {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                                         </button>
@@ -488,16 +411,13 @@ const Registration = () => {
                                             {errors.confirmPassword.message}
                                         </p>
                                     )}
-                                </motion.div>
+                                </div>
 
                                 {/* Submit Button */}
-                                <motion.button
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.6, delay: 1.3 }}
+                                <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-lg"
+                                    className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all disabled:opacity-50"
                                 >
                                     {loading ? (
                                         <div className="flex items-center justify-center">
@@ -507,48 +427,37 @@ const Registration = () => {
                                     ) : (
                                         'Create Account'
                                     )}
-                                </motion.button>
+                                </button>
                             </form>
 
                             {/* Separator */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, delay: 1.4 }}
-                                className="my-6 flex items-center before:flex-1 before:border-t before:border-gray-600 after:flex-1 after:border-t after:border-gray-600"
-                            >
-                                <p className="text-center font-semibold mx-4 mb-0 text-white">OR</p>
-                            </motion.div>
+                            <div className="my-6 flex items-center">
+                                <div className="flex-1 border-t border-gray-700"></div>
+                                <span className="px-4 text-gray-400">OR</span>
+                                <div className="flex-1 border-t border-gray-700"></div>
+                            </div>
 
                             {/* Sign up with Google Button */}
-                            <motion.button
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, delay: 1.5 }}
+                            <button
                                 type="button"
                                 onClick={handleGoogleSignUp}
                                 disabled={loading}
-                                className="w-full py-3 flex items-center justify-center bg-white/10 border border-white/20 text-white font-semibold rounded-xl hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed text-lg shadow-lg"
+                                className="w-full py-3 flex items-center justify-center bg-gray-800 border border-gray-700 text-white font-semibold rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all disabled:opacity-50"
                             >
                                 <FaGoogle className="mr-2 text-red-400" />
                                 {loading ? 'Processing...' : 'Sign up with Google'}
-                            </motion.button>
+                            </button>
 
-                            <motion.p
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, delay: 1.6 }}
-                                className="text-center text-purple-200 mt-6"
-                            >
+                            <p className="text-center text-gray-400 mt-6">
                                 Already have an account?{' '}
-                                <Link to="/login" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
+                                <Link to="/login" className="text-purple-400 hover:text-purple-300 font-medium">
                                     Sign in
                                 </Link>
-                            </motion.p>
+                            </p>
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
-            </motion.div>
+            </div>
         </div>
     );
 };
