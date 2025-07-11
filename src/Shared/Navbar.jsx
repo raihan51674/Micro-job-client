@@ -94,7 +94,7 @@ const Navbar = () => {
 
                   {/* Join as Developer Button */}
                   <a
-                    href="https://github.com/your-client-repo" // Replace with actual GitHub repo URL
+                    href="https://github.com/mdtanvirislamrakib"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group relative px-6 py-3 bg-gradient-to-r from-purple-600 via-blue-600 to-indigo-600 text-white font-semibold rounded-xl transition-all duration-300 ease-in-out transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/25 border border-purple-400/30"
@@ -217,7 +217,7 @@ const Navbar = () => {
               </button>
 
               <a
-                href="https://github.com/your-client-repo" // Replace with actual GitHub repo URL
+                href="https://github.com/mdtanvirislamrakib"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={toggleMenu} // Close menu on navigation
