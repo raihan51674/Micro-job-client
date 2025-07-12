@@ -118,13 +118,33 @@ const BuyerNavigation = () => {
         >
           <NavLink
             to="/dashboard/purchase-coins"
+            end
             className={({ isActive }) =>
-              `flex items-center w-full h-full text-gray-300
-               ${isActive ? 'text-blue-400 font-semibold' : 'hover:text-blue-400'}`
+              `flex items-center w-full h-full ${isActive
+                ? 'text-white font-semibold'
+                : 'text-gray-400 hover:text-blue-300'
+              }`
             }
           >
-            <Coins className="h-5 w-5 mr-3 text-purple-400 group-hover:text-blue-400 transition-colors duration-200" />
-            <span className="font-medium">Purchase Coin</span>
+            {({ isActive }) => (
+              <>
+                <Coins
+                  className={`h-5 w-5 mr-3 transition-colors duration-200 ${isActive
+                    ? 'text-blue-300' // Slightly brighter blue for icon
+                    : 'text-purple-400 group-hover:text-blue-300'
+                    }`}
+                />
+                <span className="font-medium">Purchase Coins</span>
+                {isActive && (
+                  <motion.div
+                    className="ml-auto h-2 w-2 rounded-full bg-blue-400"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </>
+            )}
           </NavLink>
         </motion.div>
       </li>
@@ -144,13 +164,33 @@ const BuyerNavigation = () => {
         >
           <NavLink
             to="/dashboard/payment-history"
+            end
             className={({ isActive }) =>
-              `flex items-center w-full h-full text-gray-300
-               ${isActive ? 'text-blue-400 font-semibold' : 'hover:text-blue-400'}`
+              `flex items-center w-full h-full ${isActive
+                ? 'text-white font-semibold'
+                : 'text-gray-400 hover:text-blue-300'
+              }`
             }
           >
-            <History className="h-5 w-5 mr-3 text-purple-400 group-hover:text-blue-400 transition-colors duration-200" />
-            <span className="font-medium">Payment History</span>
+            {({ isActive }) => (
+              <>
+                <History
+                  className={`h-5 w-5 mr-3 transition-colors duration-200 ${isActive
+                    ? 'text-blue-300' // Slightly brighter blue for icon
+                    : 'text-purple-400 group-hover:text-blue-300'
+                    }`}
+                />
+                <span className="font-medium">Payment History</span>
+                {isActive && (
+                  <motion.div
+                    className="ml-auto h-2 w-2 rounded-full bg-blue-400"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </>
+            )}
           </NavLink>
         </motion.div>
       </li>

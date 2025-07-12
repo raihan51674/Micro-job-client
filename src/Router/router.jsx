@@ -8,6 +8,7 @@ import DashboardHomePage from "../Pages/Dashboard/DashboardHomePage/DashboardHom
 import AddTask from "../Pages/DashboardBuyerPages/AddTask/AddTask";
 import MyTasks from "../Pages/DashboardBuyerPages/MyTasks/MyTasks";
 import PurchaseCoinComponent from "../Pages/DashboardBuyerPages/PurchaseCoin/PurchaseCoin";
+import PaymentHistory from "../Pages/DashboardBuyerPages/PaymentHistory/PaymentHistory";
 
 
 
@@ -54,6 +55,10 @@ export const router = createBrowserRouter([
       {
         path: "purchase-coins",
         Component: PurchaseCoinComponent
+      },
+      {
+        path: "payment-history",
+        Component: PaymentHistory
       }
     ]
   }
