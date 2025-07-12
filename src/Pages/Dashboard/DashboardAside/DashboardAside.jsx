@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutDashboard, ArrowRightCircle, X, Briefcase } from 'lucide-react';
-import { NavLink, useNavigate } from 'react-router';
+import { NavLink} from 'react-router';
 import toast from 'react-hot-toast';
 import { AuthContext } from '../../../Provider/AuthProvider';
 import WorkerNavigation from '../../../Component/DashboardNav/WorkerNavigation/WorkerNavigation';
@@ -12,7 +12,6 @@ const DashboardAside = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isMobileView, setIsMobileView] = useState(false);
     const { logOut } = useContext(AuthContext);
-    const navigate = useNavigate();
 
     useEffect(() => {
         const handleResize = () => {
@@ -32,7 +31,6 @@ const DashboardAside = () => {
     const logout = () => {
         logOut();
         toast.success('Successfully Logout!');
-        navigate("/");
     };
 
     

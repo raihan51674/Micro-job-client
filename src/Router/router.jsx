@@ -14,6 +14,7 @@ import ManageTasks from "../Pages/DashboardAdminPages/ManageTasks/ManageTasks";
 import TaskList from "../Pages/DashboardWorkerPages/TaskList/TaskList";
 import MySubmission from "../Pages/DashboardWorkerPages/MySubmission/MySubmission";
 import WorkerWithdrawals from "../Pages/DashboardWorkerPages/WorkerWithdrawals/WorkerWithdrawals";
+import PrivetRoute from "../Provider/PrivetRoute";
 
 
 
@@ -47,50 +48,70 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        Component: DashboardHomePage
+        element: <PrivetRoute>
+          <DashboardHomePage></DashboardHomePage>
+        </PrivetRoute>
       },
 
       // Worker Routes
       {
         path: "tasks",
-        Component: TaskList
+        element: <PrivetRoute>
+          <TaskList></TaskList>
+        </PrivetRoute>
       },
       {
         path: "submissions",
-        Component: MySubmission
+        element: <PrivetRoute>
+          <MySubmission></MySubmission>
+        </PrivetRoute>
       },
       {
         path: "withdrawals",
-        Component: WorkerWithdrawals
+        element: <PrivetRoute>
+          <WorkerWithdrawals></WorkerWithdrawals>
+        </PrivetRoute>
       },
 
 
       // Buyer routes
       {
         path: "add-task",
-        Component: AddTask
+        element: <PrivetRoute>
+          <AddTask></AddTask>
+        </PrivetRoute>
       },
       {
         path: "my-tasks",
-        Component: MyTasks
+        element: <PrivetRoute>
+          <MyTasks></MyTasks>
+        </PrivetRoute>
       },
       {
         path: "purchase-coins",
-        Component: PurchaseCoinComponent
+        element: <PrivetRoute>
+          <PurchaseCoinComponent></PurchaseCoinComponent>
+        </PrivetRoute>
       },
       {
         path: "payment-history",
-        Component: PaymentHistory
+        element: <PrivetRoute>
+          <PaymentHistory></PaymentHistory>
+        </PrivetRoute>
       },
 
       // admin routes
       {
         path: "manage-users",
-        Component: ManageUsers
+        element: <PrivetRoute>
+          <ManageUsers></ManageUsers>
+        </PrivetRoute>
       },
       {
         path: "manage-tasks",
-        Component: ManageTasks
+        element: <PrivetRoute>
+          <ManageTasks></ManageTasks>
+        </PrivetRoute>
       }
     ]
   }
