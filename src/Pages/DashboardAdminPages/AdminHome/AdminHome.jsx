@@ -111,7 +111,7 @@ const AdminHome = () => {
   const pendingRequests = withdrawRequests.filter(req => req.status === 'Pending');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-zinc-900 to-gray-950 p-4 sm:p-6 lg:p-8 flex items-start justify-center font-sans text-white">
+    <div className="min-h-screen p-4 sm:p-6 lg:p-8 flex items-start justify-center font-sans text-white">
       <motion.div
         className="w-full max-w-7xl mx-auto bg-gray-800/30 backdrop-blur-xl rounded-xl lg:rounded-3xl shadow-xl lg:shadow-2xl border border-gray-700/60 p-4 sm:p-6 lg:p-8 overflow-hidden"
         variants={containerVariants}
