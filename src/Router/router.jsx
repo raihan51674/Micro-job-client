@@ -11,6 +11,7 @@ import PurchaseCoinComponent from "../Pages/DashboardBuyerPages/PurchaseCoin/Pur
 import PaymentHistory from "../Pages/DashboardBuyerPages/PaymentHistory/PaymentHistory";
 import ManageUsers from "../Pages/DashboardAdminPages/ManageUsers/ManageUsers";
 import ManageTasks from "../Pages/DashboardAdminPages/ManageTasks/ManageTasks";
+import TaskList from "../Pages/DashboardWorkerPages/TaskList/TaskList";
 
 
 
@@ -46,6 +47,15 @@ export const router = createBrowserRouter([
         index: true,
         Component: DashboardHomePage
       },
+
+      // Worker Routes
+      {
+        path: "tasks",
+        Component: TaskList
+      },
+
+
+      // Buyer routes
       {
         path: "add-task",
         Component: AddTask
@@ -62,6 +72,8 @@ export const router = createBrowserRouter([
         path: "payment-history",
         Component: PaymentHistory
       },
+
+      // admin routes
       {
         path: "manage-users",
         Component: ManageUsers
