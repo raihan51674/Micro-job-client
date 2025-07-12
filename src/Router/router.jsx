@@ -4,6 +4,7 @@ import Registration from "../Pages/Registration/Registration";
 import Login from "../Pages/Login/Login";
 import Home from "../Pages/Home/Home";
 import DashboardLayout from "../Pages/Dashboard/DashboardLayout/DashboardLayout";
+import DashboardHomePage from "../Pages/Dashboard/DashboardHomePage/DashboardHomePage";
 
 
 
@@ -32,6 +33,13 @@ export const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    element: <DashboardLayout></DashboardLayout>
+    element: <DashboardLayout></DashboardLayout>,
+    errorElement: <p>404 Error....</p>,
+    children: [
+      {
+        index: true,
+        Component: DashboardHomePage
+      }
+    ]
   }
 ]);

@@ -77,12 +77,25 @@ const DashboardAside = () => {
                                 >
                                     <NavLink
                                         to="/dashboard"
+                                        end
                                         className={({ isActive }) =>
-                                            `flex items-center w-full h-full text-gray-300 ${isActive ? 'text-blue-400 font-semibold' : 'hover:text-blue-400'}`
+                                            `flex items-center w-full h-full ${isActive
+                                                ? 'text-blue-400 font-semibold'
+                                                : 'text-gray-400 hover:text-blue-300'
+                                            }`
                                         }
                                     >
-                                        <LayoutDashboard className="h-5 w-5 mr-3 text-purple-400 group-hover:text-blue-400 transition-colors duration-200" />
-                                        <span className="font-medium">Home</span>
+                                        {({ isActive }) => (
+                                            <>
+                                                <LayoutDashboard
+                                                    className={`h-5 w-5 mr-3 transition-colors duration-200 ${isActive
+                                                        ? 'text-blue-400'
+                                                        : 'text-purple-400 group-hover:text-blue-400'
+                                                        }`}
+                                                />
+                                                <span className="font-medium">Home</span>
+                                            </>
+                                        )}
                                     </NavLink>
                                 </motion.div>
                             </li>
@@ -94,7 +107,7 @@ const DashboardAside = () => {
 
                     {/* Footer */}
                     <div className="mt-auto pt-6 border-t border-white/10 text-center">
-                        
+
                         <button onClick={logout} className="mt-3 px-4 py-2 text-sm bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
                             Logout
                         </button>
@@ -128,7 +141,7 @@ const DashboardAside = () => {
                         >
                             {/* Header */}
                             <div className="flex justify-between items-center mb-10 mt-2">
-                                
+
                                 <button
                                     onClick={() => setIsSidebarOpen(false)}
                                     className="text-gray-300 hover:text-blue-400 p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -156,12 +169,25 @@ const DashboardAside = () => {
                                         >
                                             <NavLink
                                                 to="/dashboard"
+                                                end
                                                 className={({ isActive }) =>
-                                                    `flex items-center w-full h-full text-gray-300 ${isActive ? 'text-blue-400 font-semibold' : 'hover:text-blue-400'}`
+                                                    `flex items-center w-full h-full ${isActive
+                                                        ? 'text-blue-400 font-semibold'
+                                                        : 'text-gray-400 hover:text-blue-300'
+                                                    }`
                                                 }
                                             >
-                                                <LayoutDashboard className="h-5 w-5 mr-3 text-purple-400 group-hover:text-blue-400 transition-colors duration-200" />
-                                                <span className="font-medium">Home</span>
+                                                {({ isActive }) => (
+                                                    <>
+                                                        <LayoutDashboard
+                                                            className={`h-5 w-5 mr-3 transition-colors duration-200 ${isActive
+                                                                ? 'text-blue-400'
+                                                                : 'text-purple-400 group-hover:text-blue-400'
+                                                                }`}
+                                                        />
+                                                        <span className="font-medium">Home</span>
+                                                    </>
+                                                )}
                                             </NavLink>
                                         </motion.div>
                                     </li>
@@ -173,7 +199,7 @@ const DashboardAside = () => {
 
                             {/* Footer */}
                             <div className="mt-auto pt-6 border-t border-white/10 text-center">
-                                
+
                                 <button onClick={logout} className="mt-3 px-4 py-2 text-sm bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
                                     Logout
                                 </button>
