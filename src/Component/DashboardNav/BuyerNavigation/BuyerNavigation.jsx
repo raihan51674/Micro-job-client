@@ -26,13 +26,25 @@ const BuyerNavigation = () => {
         >
           <NavLink
             to="/dashboard/add-task"
+            end
             className={({ isActive }) =>
-              `flex items-center w-full h-full text-gray-300
-               ${isActive ? 'text-blue-400 font-semibold' : 'hover:text-blue-400'}`
+              `flex items-center w-full h-full ${isActive
+                ? 'text-blue-400 font-semibold'
+                : 'text-gray-400 hover:text-blue-300'
+              }`
             }
           >
-            <PlusSquare className="h-5 w-5 mr-3 text-purple-400 group-hover:text-blue-400 transition-colors duration-200" />
-            <span className="font-medium">Add New Task</span>
+            {({ isActive }) => (
+              <>
+                <PlusSquare
+                  className={`h-5 w-5 mr-3 transition-colors duration-200 ${isActive
+                    ? 'text-blue-400'
+                    : 'text-purple-400 group-hover:text-blue-400'
+                    }`}
+                />
+                <span className="font-medium">Add Task</span>
+              </>
+            )}
           </NavLink>
         </motion.div>
       </li>

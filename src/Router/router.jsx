@@ -5,6 +5,7 @@ import Login from "../Pages/Login/Login";
 import Home from "../Pages/Home/Home";
 import DashboardLayout from "../Pages/Dashboard/DashboardLayout/DashboardLayout";
 import DashboardHomePage from "../Pages/Dashboard/DashboardHomePage/DashboardHomePage";
+import AddTask from "../Pages/DashboardBuyerPages/AddTask/AddTask";
 
 
 
@@ -39,6 +40,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         Component: DashboardHomePage
+      },
+      {
+        path: "add-task",
+        Component: AddTask
       }
     ]
   }
