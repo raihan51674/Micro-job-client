@@ -15,6 +15,7 @@ import TaskList from "../Pages/DashboardWorkerPages/TaskList/TaskList";
 import MySubmission from "../Pages/DashboardWorkerPages/MySubmission/MySubmission";
 import WorkerWithdrawals from "../Pages/DashboardWorkerPages/WorkerWithdrawals/WorkerWithdrawals";
 import PrivetRoute from "../Provider/PrivetRoute";
+import ErrorPage from "../Pages/ErrorPage/ErrorPage";
 
 
 
@@ -25,7 +26,7 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout></RootLayout>,
-    errorElement: <p>Error page</p>,
+    errorElement: <ErrorPage></ErrorPage>,
     children: [
       {
         index: true,
@@ -44,7 +45,7 @@ export const router = createBrowserRouter([
   {
     path: "/dashboard",
     element: <DashboardLayout></DashboardLayout>,
-    errorElement: <p>404 Error....</p>,
+    errorElement: <ErrorPage></ErrorPage>,
     children: [
       {
         index: true,
