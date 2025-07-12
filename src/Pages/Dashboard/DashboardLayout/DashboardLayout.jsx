@@ -7,7 +7,7 @@ const DashboardLayout = () => {
 
     return (
         <div
-            className="min-h-screen flex flex-col text-gray-100" 
+            className=" flex flex-col text-gray-100" 
             style={{
                 background: 'radial-gradient(circle at center, #0d1117, #0d1117 80%, #1a202c)',
             }}

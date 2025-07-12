@@ -29,7 +29,7 @@ const BuyerNavigation = () => {
             end
             className={({ isActive }) =>
               `flex items-center w-full h-full ${isActive
-                ? 'text-blue-400 font-semibold'
+                ? 'text-white font-semibold'
                 : 'text-gray-400 hover:text-blue-300'
               }`
             }
@@ -38,11 +38,19 @@ const BuyerNavigation = () => {
               <>
                 <PlusSquare
                   className={`h-5 w-5 mr-3 transition-colors duration-200 ${isActive
-                    ? 'text-blue-400'
-                    : 'text-purple-400 group-hover:text-blue-400'
+                    ? 'text-blue-300' // Slightly brighter blue for icon
+                    : 'text-purple-400 group-hover:text-blue-300'
                     }`}
                 />
                 <span className="font-medium">Add Task</span>
+                {isActive && (
+                  <motion.div
+                    className="ml-auto h-2 w-2 rounded-full bg-blue-400"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
               </>
             )}
           </NavLink>
@@ -64,13 +72,33 @@ const BuyerNavigation = () => {
         >
           <NavLink
             to="/dashboard/my-tasks"
+            end
             className={({ isActive }) =>
-              `flex items-center w-full h-full text-gray-300
-               ${isActive ? 'text-blue-400 font-semibold' : 'hover:text-blue-400'}`
+              `flex items-center w-full h-full ${isActive
+                ? 'text-white font-semibold'
+                : 'text-gray-400 hover:text-blue-300'
+              }`
             }
           >
-            <FaTasks className="h-5 w-5 mr-3 text-purple-400 group-hover:text-blue-400 transition-colors duration-200" />
-            <span className="font-medium">My Tasks</span>
+            {({ isActive }) => (
+              <>
+                <FaTasks
+                  className={`h-5 w-5 mr-3 transition-colors duration-200 ${isActive
+                    ? 'text-blue-300' // Slightly brighter blue for icon
+                    : 'text-purple-400 group-hover:text-blue-300'
+                    }`}
+                />
+                <span className="font-medium">My Tasks</span>
+                {isActive && (
+                  <motion.div
+                    className="ml-auto h-2 w-2 rounded-full bg-blue-400"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </>
+            )}
           </NavLink>
         </motion.div>
       </li>
