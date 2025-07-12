@@ -35,11 +35,7 @@ const DashboardAside = () => {
         navigate("/");
     };
 
-    const handleNavigationClick = () => {
-        if (isMobileView) {
-            setIsSidebarOpen(false);
-        }
-    };
+    
 
     return (
         <div className="flex flex-col text-gray-100"
@@ -103,8 +99,8 @@ const DashboardAside = () => {
                                                 <>
                                                     <LayoutDashboard
                                                         className={`h-5 w-5 mr-3 transition-colors duration-200 ${isActive
-                                                                ? 'text-blue-300' // Slightly brighter blue for icon
-                                                                : 'text-purple-400 group-hover:text-blue-300'
+                                                            ? 'text-blue-300' // Slightly brighter blue for icon
+                                                            : 'text-purple-400 group-hover:text-blue-300'
                                                             }`}
                                                     />
                                                     <span className="font-medium">Home</span>
@@ -189,14 +185,13 @@ const DashboardAside = () => {
                                                 WebkitBackdropFilter: 'blur(5px)',
                                                 border: '1px solid rgba(255, 255, 255, 0.08)',
                                             }}
-                                            onClick={handleNavigationClick}
                                         >
                                             <NavLink
                                                 to="/dashboard"
                                                 end
                                                 className={({ isActive }) =>
                                                     `flex items-center w-full h-full ${isActive
-                                                        ? 'text-blue-400 font-semibold'
+                                                        ? 'text-white font-semibold'
                                                         : 'text-gray-400 hover:text-blue-300'
                                                     }`
                                                 }
@@ -205,11 +200,19 @@ const DashboardAside = () => {
                                                     <>
                                                         <LayoutDashboard
                                                             className={`h-5 w-5 mr-3 transition-colors duration-200 ${isActive
-                                                                ? 'text-blue-400'
-                                                                : 'text-purple-400 group-hover:text-blue-400'
+                                                                ? 'text-blue-300' // Slightly brighter blue for icon
+                                                                : 'text-purple-400 group-hover:text-blue-300'
                                                                 }`}
                                                         />
                                                         <span className="font-medium">Home</span>
+                                                        {isActive && (
+                                                            <motion.div
+                                                                className="ml-auto h-2 w-2 rounded-full bg-blue-400"
+                                                                initial={{ scale: 0 }}
+                                                                animate={{ scale: 1 }}
+                                                                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                                                            />
+                                                        )}
                                                     </>
                                                 )}
                                             </NavLink>
