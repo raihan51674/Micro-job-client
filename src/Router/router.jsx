@@ -10,6 +10,7 @@ import MyTasks from "../Pages/DashboardBuyerPages/MyTasks/MyTasks";
 import PurchaseCoinComponent from "../Pages/DashboardBuyerPages/PurchaseCoin/PurchaseCoin";
 import PaymentHistory from "../Pages/DashboardBuyerPages/PaymentHistory/PaymentHistory";
 import ManageUsers from "../Pages/DashboardAdminPages/ManageUsers/ManageUsers";
+import ManageTasks from "../Pages/DashboardAdminPages/ManageTasks/ManageTasks";
 
 
 
@@ -64,6 +65,10 @@ export const router = createBrowserRouter([
       {
         path: "manage-users",
         Component: ManageUsers
+      },
+      {
+        path: "manage-tasks",
+        Component: ManageTasks
       }
     ]
   }
