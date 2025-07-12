@@ -12,6 +12,7 @@ import PaymentHistory from "../Pages/DashboardBuyerPages/PaymentHistory/PaymentH
 import ManageUsers from "../Pages/DashboardAdminPages/ManageUsers/ManageUsers";
 import ManageTasks from "../Pages/DashboardAdminPages/ManageTasks/ManageTasks";
 import TaskList from "../Pages/DashboardWorkerPages/TaskList/TaskList";
+import MySubmission from "../Pages/DashboardWorkerPages/MySubmission/MySubmission";
 
 
 
@@ -52,6 +53,10 @@ export const router = createBrowserRouter([
       {
         path: "tasks",
         Component: TaskList
+      },
+      {
+        path: "submissions",
+        Component: MySubmission
       },
 
 
