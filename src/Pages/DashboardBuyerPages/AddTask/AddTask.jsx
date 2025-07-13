@@ -13,6 +13,7 @@ import {
     X,
 } from 'lucide-react';
 import { imageUpload } from '../../../API/utils';
+import axios from 'axios';
 
 
 const AddTask = () => {
@@ -30,17 +31,22 @@ const AddTask = () => {
 
         const imageURL = await imageUpload(taskImageFile)
 
-        const taskData = {taskTitle, taskDetails, requiredWorkers, payableAmount, completationDate, submissionInfo, image: imageURL }
+        const taskData = { taskTitle, taskDetails, requiredWorkers, payableAmount, completationDate, submissionInfo, image: imageURL }
         console.log(taskData);
 
+        const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/add-task`, taskData)
+        console.log(data);
 
-        // Show SweetAlert
-        // Swal.fire({
-        //     title: 'Task Added Successfully!',
-        //     icon: 'success',
-        //     confirmButtonText: 'Great!',
 
-        // })
+        if (data?.insertedId) {
+            // Show SweetAlert
+            Swal.fire({
+                title: 'Task Added Successfully!',
+                icon: 'success',
+                confirmButtonText: 'Great!',
+
+            })
+        }
     };
 
     return (
