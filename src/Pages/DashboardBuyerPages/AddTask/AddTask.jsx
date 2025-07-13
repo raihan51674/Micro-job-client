@@ -1,6 +1,6 @@
 
 import { motion } from 'framer-motion';
-import Swal from 'sweetalert2'; 
+import Swal from 'sweetalert2';
 import {
     ListTodo,
     FileText,
@@ -12,23 +12,43 @@ import {
     Upload,
     X,
 } from 'lucide-react';
+import axios from 'axios';
 
 
 const AddTask = () => {
 
-
-
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const form = e.target;
+        const taskTitle = form.task_title.value;
+        const taskDetails = form.task_detail.value;
+        const requiredWorkers = form.required_workers.value;
+        const payableAmount = form.payable_amount.value;
+        const completationDate = form.completion_date.value;
+        const submissionInfo = form.submission_info.value;
+        const taskImageFile = form.task_image_file.files[0];
+
+        // Create FormData
+        const formData = new FormData();
+        formData.append("image", taskImageFile);
+
+        // Upload image in imgbb server using post request
+        // Upload URL
+        const uploadUrl = `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_IMGBB_API_KEY}`
+
+        const {data} = await axios.post(uploadUrl, formData);
+        const imageURL = data?.data?.display_url;
+        const taskData = {taskTitle, taskDetails, requiredWorkers, payableAmount, completationDate, submissionInfo, image: imageURL }
+        console.log(taskData);
 
 
         // Show SweetAlert
-        Swal.fire({
-            title: 'Task Added Successfully!',
-            icon: 'success',
-            confirmButtonText: 'Great!',
-            
-        })
+        // Swal.fire({
+        //     title: 'Task Added Successfully!',
+        //     icon: 'success',
+        //     confirmButtonText: 'Great!',
+
+        // })
     };
 
     return (
@@ -153,30 +173,29 @@ const AddTask = () => {
                             <Image className="h-4 w-4 mr-2 text-pink-400" />
                             Task Image *
                         </label>
-                        
-                            <label className="w-full p-3 rounded-lg bg-white/5 border border-white/10 text-white focus-within:ring-2 focus-within:ring-blue-500 transition-all cursor-pointer flex items-center justify-between shadow-inner">
-                                <span className="text-gray-400 text-sm truncate">
-                                    Choose an image file
-                                </span>
-                                <input
-                                    type="file"
-                                    id="task_image_file"
-                                    name="task_image_file"
-                                    accept="image/*"
-                                    className="hidden" // Hide default file input
-                                    required
-                                />
-                                <span className="ml-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors cursor-pointer">
-                                    Browse
-                                </span>
-                            </label>
-                        
+
+                        <label className="w-full p-3 rounded-lg bg-white/5 border border-white/10 text-white focus-within:ring-2 focus-within:ring-blue-500 transition-all cursor-pointer flex items-center justify-between shadow-inner">
+                            <span className="text-gray-400 text-sm truncate">
+                                Choose an image file
+                            </span>
+                            <input
+                                type="file"
+                                name="task_image_file"
+                                accept="image/*"
+                                className='sr-only'
+                                required
+                            />
+                            <span className="ml-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors cursor-pointer">
+                                Browse
+                            </span>
+                        </label>
+
                     </div>
 
                     {/* Add Task Button */}
                     <motion.button
                         type="submit"
-                        whileHover={{ scale: 1.02, backgroundColor: '#2563eb' }} // Darker blue on hover
+                        whileHover={{ scale: 1.02 }} // Darker blue on hover
                         whileTap={{ scale: 0.98 }}
                         className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
