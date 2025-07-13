@@ -12,7 +12,7 @@ import {
     Upload,
     X,
 } from 'lucide-react';
-import axios from 'axios';
+import { imageUpload } from '../../../API/utils';
 
 
 const AddTask = () => {
@@ -28,16 +28,8 @@ const AddTask = () => {
         const submissionInfo = form.submission_info.value;
         const taskImageFile = form.task_image_file.files[0];
 
-        // Create FormData
-        const formData = new FormData();
-        formData.append("image", taskImageFile);
+        const imageURL = await imageUpload(taskImageFile)
 
-        // Upload image in imgbb server using post request
-        // Upload URL
-        const uploadUrl = `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_IMGBB_API_KEY}`
-
-        const {data} = await axios.post(uploadUrl, formData);
-        const imageURL = data?.data?.display_url;
         const taskData = {taskTitle, taskDetails, requiredWorkers, payableAmount, completationDate, submissionInfo, image: imageURL }
         console.log(taskData);
 
