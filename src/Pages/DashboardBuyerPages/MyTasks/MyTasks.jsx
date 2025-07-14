@@ -196,7 +196,7 @@ const MyTasks = () => {
                                         <tbody className="divide-y divide-gray-700/50">
                                             {tasks.map((task, index) => (
                                                 <tr
-                                                    key={task._id}
+                                                    key={task?._id}
                                                     className={`hover:bg-gray-700/30 transition-all duration-200 ${index % 2 === 0
                                                         ? "bg-gray-800/20"
                                                         : "bg-gray-800/40"
@@ -212,7 +212,7 @@ const MyTasks = () => {
                                                                         "/placeholder.svg"
                                                                     }
                                                                     alt={
-                                                                        task.task_title
+                                                                        task?.taskTitle
                                                                     }
                                                                     className="w-8 h-8 md:w-10 md:h-10 rounded-lg object-cover border-2 border-gray-600"
                                                                 />
@@ -240,7 +240,7 @@ const MyTasks = () => {
                                                                         )}
                                                                 </div>
                                                                 <p className="text-xs text-gray-400">
-                                                                    ID: {task._id}
+                                                                    ID: {task?._id}
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -267,7 +267,7 @@ const MyTasks = () => {
                                                     <td className="px-4 py-4 text-center">
                                                         <div className="text-sm text-gray-300 font-medium">
                                                             {formatDate(
-                                                                task.completationDate
+                                                                task?.completationDate
                                                             )}
                                                         </div>
                                                     </td>
@@ -289,7 +289,7 @@ const MyTasks = () => {
                                                             <button
                                                                 onClick={() =>
                                                                     handleDeleteTask(
-                                                                        task._id
+                                                                        task?._id
                                                                     )
                                                                 }
                                                                 className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded-lg transition-all duration-200 group"
@@ -381,7 +381,7 @@ const MyTasks = () => {
                                             </button>
                                             <button
                                                 onClick={() =>
-                                                    handleDeleteTask(task._id)
+                                                    handleDeleteTask(task?._id)
                                                 }
                                                 className="flex-1 px-4 py-2 text-red-400 bg-red-900/30 hover:bg-red-900/50 rounded-lg font-medium transition-colors flex items-center justify-center space-x-1"
                                                 title="Delete Task"
