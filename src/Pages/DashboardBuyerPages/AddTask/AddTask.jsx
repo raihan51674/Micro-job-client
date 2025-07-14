@@ -14,9 +14,13 @@ import {
 } from 'lucide-react';
 import { imageUpload } from '../../../API/utils';
 import axios from 'axios';
+import { useContext } from 'react';
+import { AuthContext } from '../../../Provider/AuthProvider';
 
 
 const AddTask = () => {
+    const {user} = useContext(AuthContext);
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -31,11 +35,22 @@ const AddTask = () => {
 
         const imageURL = await imageUpload(taskImageFile)
 
-        const taskData = { taskTitle, taskDetails, requiredWorkers, payableAmount, completationDate, submissionInfo, image: imageURL }
-        console.log(taskData);
+        const taskData = { 
+            taskTitle, 
+            taskDetails, 
+            requiredWorkers: parseInt(requiredWorkers), 
+            payableAmount: parseInt(payableAmount), 
+            completationDate, 
+            submissionInfo, 
+            image: imageURL,
+            buyer: {
+                name: user?.displayName,
+                email: user?.email,
+                buyer_image: user?.photoURL
+            }
+         }
 
         const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/add-task`, taskData)
-        console.log(data);
 
 
         if (data?.insertedId) {

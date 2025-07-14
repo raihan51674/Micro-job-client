@@ -16,6 +16,7 @@ import MySubmission from "../Pages/DashboardWorkerPages/MySubmission/MySubmissio
 import WorkerWithdrawals from "../Pages/DashboardWorkerPages/WorkerWithdrawals/WorkerWithdrawals";
 import PrivetRoute from "../Provider/PrivetRoute";
 import ErrorPage from "../Pages/ErrorPage/ErrorPage";
+import LoadingSpinner from "../Shared/LoadingSpinner";
 
 
 
@@ -59,7 +60,7 @@ export const router = createBrowserRouter([
         path: "tasks",
         element: <PrivetRoute>
           <TaskList></TaskList>
-        </PrivetRoute>
+        </PrivetRoute>,
       },
       {
         path: "submissions",
