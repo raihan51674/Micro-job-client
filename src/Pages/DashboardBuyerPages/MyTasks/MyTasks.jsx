@@ -1,48 +1,19 @@
 
 
 import { Pencil, Trash2, X, Info } from "lucide-react";
+import { useLoaderData } from "react-router";
 
 // Mock data to simulate tasks added by the user
-const initialTasks = [
-    {
-        id: "1",
-        task_title: "Watch YouTube Video and leave comment on their latest video about AI",
-        required_workers: 100,
-        payable_amount: 0.05,
-        completion_date: "2025-07-30",
-        task_image_url: "",
-    },
-    {
-        id: "2",
-        task_title: "Sign Up for Newsletter and confirm your email subscription",
-        required_workers: 50,
-        payable_amount: 0.1,
-        completion_date: "2025-07-25",
-        task_image_url: "",
-    },
-    {
-        id: "3",
-        task_title: "Write a detailed 5-star Product Review for our new gadget",
-        required_workers: 20,
-        payable_amount: 0.5,
-        completion_date: "2025-08-15",
-        task_image_url: "",
-    },
-    {
-        id: "4",
-        task_title: "Follow Social Media and engage with our latest posts",
-        required_workers: 80,
-        payable_amount: 0.03,
-        completion_date: "2025-07-20",
-        task_image_url: "",
-    },
-];
+
 
 
 
 
 // Main MyTasks Component
 const MyTasks = () => {
+
+    const initialTasks = useLoaderData()
+
     // Helper function to format date
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -60,11 +31,6 @@ const MyTasks = () => {
     };
 
 
-
-    // Effect to sort tasks by completion_date in descending order on initial load
-
-
-    // Handler for deleting a task
 
 
 
@@ -127,7 +93,7 @@ const MyTasks = () => {
                                         <tbody className="divide-y divide-gray-700/50">
                                             {initialTasks.map((task, index) => (
                                                 <tr
-                                                    key={task.id}
+                                                    key={task._id}
                                                     className={`hover:bg-gray-700/30 transition-all duration-200 ${
                                                         index % 2 === 0 ? "bg-gray-800/20" : "bg-gray-800/40"
                                                     }`}
@@ -137,7 +103,7 @@ const MyTasks = () => {
                                                         <div className="flex items-center space-x-3">
                                                             <div className="flex-shrink-0">
                                                                 <img
-                                                                    src={task.task_image_url || "/placeholder.svg"}
+                                                                    src={task?.image || "/placeholder.svg"}
                                                                     alt={task.task_title}
                                                                     className="w-8 h-8 md:w-10 md:h-10 rounded-lg object-cover border-2 border-gray-600"
                                                                 />
@@ -145,18 +111,18 @@ const MyTasks = () => {
                                                             <div className="flex-1 min-w-0">
                                                                 <div className="flex items-center">
                                                                     <p className="text-sm font-semibold text-white truncate max-w-[200px]">
-                                                                        {truncateText(task.task_title, 8)}
+                                                                        {truncateText(task?.taskTitle, 8)}
                                                                     </p>
-                                                                    {task.task_title.split(' ').length > 8 && (
+                                                                    {task?.taskTitle.split(' ').length > 8 && (
                                                                         <span className="relative group ml-1 flex-shrink-0">
                                                                             <Info className="h-3 w-3 text-gray-400 cursor-help" />
                                                                             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max p-2 text-xs text-white bg-gray-700 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
-                                                                                {task.task_title}
+                                                                                {task?.taskTitle}
                                                                             </span>
                                                                         </span>
                                                                     )}
                                                                 </div>
-                                                                <p className="text-xs text-gray-400">ID: {task.id}</p>
+                                                                <p className="text-xs text-gray-400">ID: {task._id}</p>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -164,20 +130,20 @@ const MyTasks = () => {
                                                     {/* Workers Column */}
                                                     <td className="px-4 py-4 text-center">
                                                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-900/50 text-blue-300 border border-blue-700/50">
-                                                            {task.required_workers}
+                                                            {task?.requiredWorkers}
                                                         </span>
                                                     </td>
 
                                                     {/* Payment Column */}
                                                     <td className="px-4 py-4 text-center">
                                                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-900/50 text-green-300 border border-green-700/50">
-                                                            ${Number.parseFloat(task.payable_amount).toFixed(2)}
+                                                            ${Number.parseFloat(task?.payableAmount).toFixed(2)}
                                                         </span>
                                                     </td>
 
                                                     {/* Date Column */}
                                                     <td className="px-4 py-4 text-center">
-                                                        <div className="text-sm text-gray-300 font-medium">{formatDate(task.completion_date)}</div>
+                                                        <div className="text-sm text-gray-300 font-medium">{formatDate(task.completationDate)}</div>
                                                     </td>
 
                                                     {/* Actions Column */}
@@ -208,16 +174,16 @@ const MyTasks = () => {
                             {/* Card View (visible on medium screens and below) */}
                             <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                                 {initialTasks.map((task) => (
-                                    <div key={task.id} className="bg-gray-800/40 border border-gray-700/50 rounded-xl shadow-lg p-4 sm:p-5 flex flex-col justify-between hover:bg-gray-700/30 transition-colors duration-200">
+                                    <div key={task?._id} className="bg-gray-800/40 border border-gray-700/50 rounded-xl shadow-lg p-4 sm:p-5 flex flex-col justify-between hover:bg-gray-700/30 transition-colors duration-200">
                                         <div className="flex items-center space-x-4 mb-4">
                                             <img
-                                                src={task.task_image_url || "/placeholder.svg"}
-                                                alt={task.task_title}
+                                                src={task?.image || ""}
+                                                alt={task?.taskTitle}
                                                 className="w-16 h-16 rounded-xl object-cover border-2 border-gray-600 flex-shrink-0"
                                             />
                                             <div className="flex-grow min-w-0">
                                                 <h3 className="text-lg font-bold text-white mb-1 truncate">
-                                                    {task.task_title}
+                                                    {task?.taskTitle}
                                                 </h3>
                                                 <p className="text-sm text-gray-400">Task ID: {task.id}</p>
                                             </div>
@@ -227,19 +193,19 @@ const MyTasks = () => {
                                             <div>
                                                 <p className="text-gray-400">Workers Needed:</p>
                                                 <span className="font-semibold text-blue-300">
-                                                    {task.required_workers}
+                                                    {task?.requiredWorkers}
                                                 </span>
                                             </div>
                                             <div>
                                                 <p className="text-gray-400">Payment:</p>
                                                 <span className="font-bold text-green-300">
-                                                    ${Number.parseFloat(task.payable_amount).toFixed(2)}
+                                                    ${Number.parseFloat(task?.payableAmount).toFixed(2)}
                                                 </span>
                                             </div>
                                             <div className="col-span-2"> {/* Takes full width on mobile */}
                                                 <p className="text-gray-400">Due Date:</p>
                                                 <span className="font-semibold text-gray-300">
-                                                    {formatDate(task.completion_date)}
+                                                    {formatDate(task?.completationDate)}
                                                 </span>
                                             </div>
                                         </div>

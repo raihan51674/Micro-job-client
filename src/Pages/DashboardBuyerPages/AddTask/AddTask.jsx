@@ -120,7 +120,7 @@ const AddTask = () => {
                                 type="number"
                                 id="required_workers"
                                 name="required_workers"
-                                min="1"
+                                min="0"
                                 placeholder="e.g., 100"
                                 className="w-full p-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner"
                                 required

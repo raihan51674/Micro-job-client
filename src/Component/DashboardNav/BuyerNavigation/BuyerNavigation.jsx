@@ -1,13 +1,15 @@
 
 
-import React from 'react';
+import React, { useContext } from 'react';
 import { motion } from 'framer-motion';
 import { NavLink } from 'react-router';
 
 import { LayoutDashboard, PlusSquare, Coins, History } from 'lucide-react';
 import { FaTasks } from 'react-icons/fa'; // For My Tasks
+import { AuthContext } from '../../../Provider/AuthProvider';
 
 const BuyerNavigation = () => {
+  const {user} = useContext(AuthContext)
   return (
     <ul className="space-y-3">
 
@@ -71,7 +73,7 @@ const BuyerNavigation = () => {
           }}
         >
           <NavLink
-            to="/dashboard/my-tasks"
+            to={`/dashboard/my-tasks/${user?.email}`}
             end
             className={({ isActive }) =>
               `flex items-center w-full h-full ${isActive

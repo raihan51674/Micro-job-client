@@ -30,7 +30,6 @@ const TaskList = () => {
         }
         fetchTasks()
     }, [])
-    console.log(tasks);
 
     
     // Framer Motion variants

@@ -84,10 +84,12 @@ export const router = createBrowserRouter([
         </PrivetRoute>
       },
       {
-        path: "my-tasks",
+        path: "my-tasks/:email",
         element: <PrivetRoute>
           <MyTasks></MyTasks>
-        </PrivetRoute>
+        </PrivetRoute>,
+        loader: ({params}) => fetch(`${import.meta.env.VITE_API_URL}/my-tasks/${params?.email}`).then(res => res.json()),
+        hydrateFallbackElement: <LoadingSpinner></LoadingSpinner>
       },
       {
         path: "purchase-coins",
