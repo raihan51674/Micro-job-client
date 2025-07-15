@@ -3,25 +3,28 @@ import { Link } from 'react-router'; // Fixed import
 import { Bell, Briefcase, Coins } from 'lucide-react'; // Added Coins icon
 import { AuthContext } from '../../../Provider/AuthProvider';
 import axios from 'axios';
+import { useQuery } from '@tanstack/react-query';
+import LoadingSpinner from '../../../Shared/LoadingSpinner';
 
 const DashboardNavbar = ({
     userRole = 'Buyer',
 }) => {
 
     const { user } = useContext(AuthContext);
-    const [availableCoins, setAvailableCoins] = useState(0)
 
-    useEffect(() => {
-        const fetchCoinData = async () => {
-            if (user?.email) {
-                const {data} = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`)
-                setAvailableCoins(data)
-            }
-        }
-        fetchCoinData()
 
-    }, [user])
 
+    const { isPending, error, data } = useQuery({
+        queryKey: ['coins'],
+        queryFn: async() =>
+            await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`)
+    })
+
+    
+
+    if (isPending) return <LoadingSpinner></LoadingSpinner>
+
+    if (error) return `${error.message}`
 
     return (
         <header
@@ -75,7 +78,7 @@ const DashboardNavbar = ({
                     )}
                     <div className="flex items-center gap-1 text-sm font-medium text-gray-100">
                         <Coins className="h-4 w-4 text-yellow-400" />
-                        {availableCoins}
+                        {data?.data}
                     </div>
                 </div>
 

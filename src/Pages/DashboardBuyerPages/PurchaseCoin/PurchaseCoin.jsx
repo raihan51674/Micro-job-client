@@ -6,10 +6,15 @@ import toast from 'react-hot-toast';
 
 import PaymentModal from '../../../Component/PaymentModal/PaymentModal';
 import { AuthContext } from '../../../Provider/AuthProvider';
-import { useLoaderData } from 'react-router'; // Import useLoaderData from 'react-router'
+import { useLoaderData } from 'react-router';
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios';
+import useUserCoins from '../../../Hooks/useUserCoins';
 
 const PurchaseCoinComponent = () => {
+
+    const QueryClient = useQueryClient()
+
     const { user, loading: authLoading } = useContext(AuthContext);
     const [selectedPackageId, setSelectedPackageId] = useState(null);
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -23,6 +28,7 @@ const PurchaseCoinComponent = () => {
 
     const [coinPackages, setCoinPackages] = useState([]); // New state to store fetched data
 
+    const { coins, isLoading, refetch } = useUserCoins();
     // Use useEffect to add icons and gradients after receiving loader data
     useEffect(() => {
         if (initialCoinPackages && initialCoinPackages.length > 0) {
@@ -70,6 +76,24 @@ const PurchaseCoinComponent = () => {
         setIsProcessingPayment(false);
     };
 
+
+    
+    const mutationKey = ['posts']
+
+    
+    // Some mutation that we want to get the state for
+    const mutation = useMutation({
+        mutationKey,
+        mutationFn: (purchaseDataToSave) => {
+            return axios.post(`${import.meta.env.VITE_API_URL}/save-purchase`, purchaseDataToSave)
+        },
+        onSuccess: () => {
+            QueryClient.invalidateQueries({ queryKey: ['coins'] })
+            refetch()
+        }
+        
+    })
+
     // This function will now receive the actual payment result from CheckoutForm
     const handleConfirmPurchase = async (packageToPurchase, transactionId, error) => {
         setIsProcessingPayment(false); // Stop processing indication
@@ -103,22 +127,11 @@ const PurchaseCoinComponent = () => {
             };
 
             // Here you would typically make an API call to your backend
-            // For example:
-            
-            try {
-                const {data} = await axios.post(`${import.meta.env.VITE_API_URL}/save-purchase`, purchaseDataToSave);
-                if(data?.insertedId) {
-                   toast.success(`Payment Succeeded! You've purchased ${packageToPurchase.coins + packageToPurchase.bonus} coins.`, { id: 'payment-toast' }); 
-                }
-                
-            } catch (backendError) {
-                console.error("Error saving purchase to backend:", backendError);
-                toast.error("Payment succeeded but failed to update coins. Please contact support.", { id: 'payment-toast' });
-            }
-            
+
+            mutation.mutate(purchaseDataToSave)
+
+
         } else {
-            // This case should ideally not be reached if Stripe's confirmCardPayment works as expected
-            // but is a fallback for unexpected scenarios where no transactionId or error is returned.
             toast.error("Payment could not be confirmed.", { id: 'payment-toast' });
         }
 
@@ -178,7 +191,7 @@ const PurchaseCoinComponent = () => {
                                 <span className="mr-2">Your Current Coins:</span>
                                 <span className="text-yellow-300 flex items-center">
                                     <DollarSign className="w-6 h-6 mr-1" />
-                                    {user.coins !== undefined ? user.coins : 'Loading...'}
+                                    {coins !== undefined ? coins : 'Loading...'}
                                 </span>
                             </p>
                         )}
@@ -312,7 +325,7 @@ const PurchaseCoinComponent = () => {
                 isOpen={isModalOpen}
                 onClose={closePaymentModal}
                 packageDetails={modalPackageDetails}
-                onConfirmPurchase={handleConfirmPurchase} 
+                onConfirmPurchase={handleConfirmPurchase}
                 isProcessing={isProcessingPayment}
             />
         </div>
