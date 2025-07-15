@@ -1,96 +1,144 @@
-import React, { useState } from 'react';
-import { Sparkles, DollarSign, Wallet, Gem, BadgeCheck, Zap, Shield, Gift, Rocket, Star } from 'lucide-react';
+// src/PurchaseCoinComponent.jsx
+import React, { useContext, useState, useEffect } from 'react';
+import { Sparkles, DollarSign, Gift, Rocket, Star, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
-const coinPackages = [
-    {
-        id: 'trial',
-        name: 'Trial Pack',
-        coins: 10,
-        price: 1,
-        bonus: 0,
-        features: [
-            'Instant Delivery',
-            'Test basic features',
-            'No commitment',
-            '24-hour support'
-        ],
-        icon: <Sparkles className="w-8 h-8 text-blue-400" />,
-        gradient: 'from-gray-600 to-gray-700',
-        popular: false,
-        bestValue: false
-    },
-    {
-        id: 'starter',
-        name: 'Starter Pack',
-        coins: 150,
-        price: 10,
-        bonus: 0,
-        features: [
-            'Great for beginners',
-            'Access to all basic tasks',
-            'Email support',
-            '7-day satisfaction'
-        ],
-        icon: <Gift className="w-8 h-8 text-purple-400" />,
-        gradient: 'from-indigo-600 to-indigo-700',
-        popular: false,
-        bestValue: false
-    },
-    {
-        id: 'pro',
-        name: 'Pro Bundle',
-        coins: 500,
-        price: 20,
-        bonus: 50,
-        features: [
-            '50 Bonus Coins',
-            'Priority task access',
-            '24/7 chat support',
-            'Weekly rewards',
-            'Best value!'
-        ],
-        icon: <Rocket className="w-8 h-8 text-orange-400" />,
-        gradient: 'from-orange-600 to-orange-700',
-        popular: true,
-        bestValue: true
-    },
-    {
-        id: 'premium',
-        name: 'Premium',
-        coins: 1000,
-        price: 35,
-        bonus: 100,
-        features: [
-            '100 Bonus Coins',
-            'Exclusive premium tasks',
-            'Dedicated manager',
-            'VIP support channel',
-            'Early feature access'
-        ],
-        icon: <Star className="w-8 h-8 text-yellow-400" />,
-        gradient: 'from-yellow-600 to-yellow-700',
-        popular: false,
-        bestValue: false
-    },
-];
+import PaymentModal from '../../../Component/PaymentModal/PaymentModal';
+import { AuthContext } from '../../../Provider/AuthProvider';
+import { useLoaderData } from 'react-router'; // Import useLoaderData from 'react-router'
+import axios from 'axios';
 
 const PurchaseCoinComponent = () => {
+    const { user, loading: authLoading } = useContext(AuthContext);
     const [selectedPackageId, setSelectedPackageId] = useState(null);
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-    const handlePurchase = () => {
-        setIsProcessing(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalPackageDetails, setModalPackageDetails] = useState(null);
 
-        // Simulate payment processing
-        toast.success("Payment Successfull")
+    // Get data from useLoaderData()
+    const loaderData = useLoaderData();
+    const initialCoinPackages = loaderData.data; // Data from the loader
+
+    const [coinPackages, setCoinPackages] = useState([]); // New state to store fetched data
+
+    // Use useEffect to add icons and gradients after receiving loader data
+    useEffect(() => {
+        if (initialCoinPackages && initialCoinPackages.length > 0) {
+            const packagesWithIconsAndGradients = initialCoinPackages.map(pkg => {
+                let iconComponent;
+                let gradientClass;
+
+                // Assign icons/gradients based on pkg.id.
+                // This is a good approach if these properties are not in your JSON data.
+                switch (pkg.id) {
+                    case 'trial':
+                        iconComponent = <Sparkles className="w-8 h-8 text-blue-400" />;
+                        gradientClass = 'from-gray-600 to-gray-700';
+                        break;
+                    case 'starter':
+                        iconComponent = <Gift className="w-8 h-8 text-purple-400" />;
+                        gradientClass = 'from-indigo-600 to-indigo-700';
+                        break;
+                    case 'pro':
+                        iconComponent = <Rocket className="w-8 h-8 text-orange-400" />;
+                        gradientClass = 'from-orange-600 to-orange-700';
+                        break;
+                    case 'premium':
+                        iconComponent = <Star className="w-8 h-8 text-yellow-400" />;
+                        gradientClass = 'from-yellow-600 to-yellow-700';
+                        break;
+                    default:
+                        iconComponent = <DollarSign className="w-8 h-8 text-gray-400" />;
+                        gradientClass = 'from-gray-500 to-gray-600'; // Default gradient
+                }
+                return { ...pkg, icon: iconComponent, gradient: gradientClass };
+            });
+            setCoinPackages(packagesWithIconsAndGradients);
+        }
+    }, [initialCoinPackages]); // This will re-run when initialCoinPackages changes
+
+    const openPaymentModal = (pkg) => {
+        setModalPackageDetails(pkg);
+        setIsModalOpen(true);
+    };
+
+    const closePaymentModal = () => {
+        setIsModalOpen(false);
+        setModalPackageDetails(null);
+        setIsProcessingPayment(false);
+    };
+
+    // This function will now receive the actual payment result from CheckoutForm
+    const handleConfirmPurchase = async (packageToPurchase, transactionId, error) => {
+        setIsProcessingPayment(false); // Stop processing indication
+
+        if (error) {
+            toast.error(error.message || "Payment failed. Please try again.", { id: 'payment-toast' });
+            // You might want to keep the modal open to let the user try again
+            // Or close it if it's a critical error
+            // closePaymentModal(); // Uncomment to close modal on error
+            return;
+        }
+
+        if (transactionId) {
+            // Payment was successful, now save the purchase data to your backend
+            if (!user || !user.email) {
+                toast.error("User not logged in or email not available. Purchase recorded but user coin balance might not update.", { id: 'payment-toast' });
+                closePaymentModal();
+                return;
+            }
+
+            const purchaseDataToSave = {
+                userName: user.displayName,
+                userEmail: user.email,
+                userImage: user.photoURL,
+                packageId: packageToPurchase.id,
+                coinsPurchased: packageToPurchase.coins + packageToPurchase.bonus,
+                pricePaid: packageToPurchase.price,
+                transactionId: transactionId,
+                purchaseDate: new Date().toISOString(),
+                status: 'succeeded',
+            };
+
+            console.log("Payment Succeeded! Data to save:", purchaseDataToSave);
+            toast.success(`Payment Succeeded! You've purchased ${packageToPurchase.coins + packageToPurchase.bonus} coins.`, { id: 'payment-toast' });
+
+            // Here you would typically make an API call to your backend
+            // For example:
+            
+            try {
+                const {data} = await axios.post(`${import.meta.env.VITE_API_URL}/save-purchase`, purchaseDataToSave);
+                console.log(data);
+                
+            } catch (backendError) {
+                console.error("Error saving purchase to backend:", backendError);
+                toast.error("Payment succeeded but failed to update coins. Please contact support.", { id: 'payment-toast' });
+            }
+            
+        } else {
+            // This case should ideally not be reached if Stripe's confirmCardPayment works as expected
+            // but is a fallback for unexpected scenarios where no transactionId or error is returned.
+            toast.error("Payment could not be confirmed.", { id: 'payment-toast' });
+        }
+
+        setSelectedPackageId(null);
+        closePaymentModal();
     };
 
     const calculateSavings = (pkg) => {
-        const baseRate = 10; // 10 coins per $1
-        const expectedPrice = pkg.coins / baseRate;
-        return expectedPrice - pkg.price;
+        const baseRate = 10;
+        const totalCoins = pkg.coins + pkg.bonus;
+        const expectedPrice = totalCoins / baseRate;
+        const savings = expectedPrice - pkg.price;
+        return savings > 0 ? savings : 0;
+    };
+
+    const calculateSavingsPercentage = (pkg) => {
+        const savings = calculateSavings(pkg);
+        if (savings === 0 || pkg.price === 0) return 0;
+        return (savings / pkg.price) * 100;
     };
 
     return (
@@ -126,16 +174,33 @@ const PurchaseCoinComponent = () => {
                         <p className="text-gray-300 text-lg max-w-2xl mx-auto">
                             Get more coins to unlock premium features and accelerate your progress. Better value with larger packages!
                         </p>
+                        {user && !authLoading && (
+                            <p className="text-gray-300 text-xl font-semibold mt-4 flex items-center justify-center">
+                                <span className="mr-2">Your Current Coins:</span>
+                                <span className="text-yellow-300 flex items-center">
+                                    <DollarSign className="w-6 h-6 mr-1" />
+                                    {user.coins !== undefined ? user.coins : 'Loading...'}
+                                </span>
+                            </p>
+                        )}
                     </div>
 
                     {/* Value comparison */}
                     <div className="bg-gray-700/30 rounded-xl p-4 mb-10 border border-gray-600/50 max-w-2xl mx-auto">
-                        <div className="flex items-center justify-center space-x-4 text-sm text-gray-300">
+                        <div className="flex flex-wrap items-center justify-center space-x-0 sm:space-x-4 space-y-2 sm:space-y-0 text-sm text-gray-300">
                             <div className="flex items-center">
                                 <div className="w-3 h-3 rounded-full bg-green-400 mr-2"></div>
-                                <span>Best value: 500 coins for $20</span>
+                                <span>
+                                    Best value: {coinPackages.length > 0 ? (
+                                        (() => {
+                                            const maxCoins = Math.max(...coinPackages.map(p => p.coins + p.bonus));
+                                            const bestValuePkg = coinPackages.find(p => (p.coins + p.bonus) === maxCoins);
+                                            return `${bestValuePkg.coins + bestValuePkg.bonus} coins for $${bestValuePkg.price}`;
+                                        })()
+                                    ) : '...'}
+                                </span>
                             </div>
-                            <div className="h-4 w-px bg-gray-500"></div>
+                            <div className="hidden sm:block h-4 w-px bg-gray-500"></div>
                             <div className="flex items-center">
                                 <Shield className="w-4 h-4 text-green-400 mr-2" />
                                 <span>Secure payments</span>
@@ -151,15 +216,20 @@ const PurchaseCoinComponent = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5, delay: pkg.popular ? 0.2 : 0 }}
-                                className={`relative flex flex-col items-center p-6 md:p-6 rounded-2xl shadow-xl border-2 
+                                className={`relative flex flex-col items-center p-6 md:p-6 rounded-2xl shadow-xl border-2
                                 bg-gradient-to-br ${pkg.gradient}
-                                ${selectedPackageId === pkg.id ? 'border-yellow-400 scale-[1.02] shadow-lg' : 'border-transparent hover:border-white/20'} 
+                                ${selectedPackageId === pkg.id ? 'border-yellow-400 scale-[1.02] shadow-lg' : 'border-transparent hover:border-white/20'}
                                 transition-all duration-300 transform cursor-pointer
                                 `}
                                 whileHover={{ y: -5 }}
                                 onClick={() => setSelectedPackageId(pkg.id)}
                             >
-
+                                {/* Bonus Badge */}
+                                {pkg.bonus > 0 && (
+                                    <div className="absolute -top-3 right-3 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md z-10 animate-bounce-slow">
+                                        +{pkg.bonus} Bonus!
+                                    </div>
+                                )}
 
                                 <div className="mb-4 p-3 rounded-full bg-white/10 backdrop-blur-sm border border-white/10">
                                     {pkg.icon}
@@ -172,7 +242,7 @@ const PurchaseCoinComponent = () => {
                                     <div className="h-2 bg-black/20 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-white/50 rounded-full"
-                                            style={{ width: `${Math.min(100, (pkg.coins / 1000) * 100)}%` }}
+                                            style={{ width: `${Math.min(100, ((pkg.coins + pkg.bonus) / 1000) * 100)}%` }}
                                         ></div>
                                     </div>
                                     <p className="text-gray-200 text-sm mt-2 text-center">
@@ -186,9 +256,9 @@ const PurchaseCoinComponent = () => {
                                         <span className="text-3xl font-extrabold text-white">${pkg.price}</span>
                                         <span className="text-gray-200 text-sm ml-1">USD</span>
                                     </div>
-                                    {pkg.price < (pkg.coins / 10) && (
+                                    {calculateSavings(pkg) > 0 && (
                                         <div className="text-xs text-green-300 bg-green-900/30 px-2 py-1 rounded mt-1">
-                                            Save ${calculateSavings(pkg).toFixed(2)} ({(calculateSavings(pkg) / pkg.price * 100).toFixed(0)}%)
+                                            Save ${calculateSavings(pkg).toFixed(2)} ({calculateSavingsPercentage(pkg).toFixed(0)}%)
                                         </div>
                                     )}
                                 </div>
@@ -215,28 +285,22 @@ const PurchaseCoinComponent = () => {
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            handlePurchase(pkg);
+                                            if (selectedPackageId === pkg.id) {
+                                                openPaymentModal(pkg);
+                                            } else {
+                                                setSelectedPackageId(pkg.id);
+                                            }
                                         }}
-                                        disabled={isProcessing}
+                                        disabled={isProcessingPayment}
                                         className={`w-full py-2.5 rounded-lg font-bold transition-all duration-300 relative overflow-hidden text-sm
-                                            ${selectedPackageId === pkg.id
+                                                ${selectedPackageId === pkg.id
                                                 ? 'bg-white text-gray-900 hover:bg-gray-100'
                                                 : 'bg-white/10 text-white hover:bg-white/20'
                                             }
-                                            ${isProcessing ? 'opacity-70 cursor-not-allowed' : ''}
-                                        `}
+                                                ${isProcessingPayment ? 'opacity-70 cursor-not-allowed' : ''}
+                                            `}
                                     >
-                                        {isProcessing && selectedPackageId === pkg.id ? (
-                                            <span className="flex items-center justify-center">
-                                                <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
-                                                Processing...
-                                            </span>
-                                        ) : (
-                                            selectedPackageId === pkg.id ? 'Confirm Purchase' : 'Select Package'
-                                        )}
+                                        {selectedPackageId === pkg.id ? 'Proceed to Payment' : 'Select Package'}
                                     </button>
                                 </div>
                             </motion.div>
@@ -244,6 +308,14 @@ const PurchaseCoinComponent = () => {
                     </div>
                 </motion.div>
             </div>
+
+            <PaymentModal
+                isOpen={isModalOpen}
+                onClose={closePaymentModal}
+                packageDetails={modalPackageDetails}
+                onConfirmPurchase={handleConfirmPurchase} 
+                isProcessing={isProcessingPayment}
+            />
         </div>
     );
 };

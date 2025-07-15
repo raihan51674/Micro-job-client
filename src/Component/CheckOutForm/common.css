@@ -1,0 +1,43 @@
+/* src/components/CheckOutForm/common.css */
+
+.StripeElement,
+.StripeElementIdeal,
+.StripeElementP24,
+.StripeElementEPS,
+.StripeElementFpx {
+  display: block;
+  margin: 10px 0 20px 0;
+  max-width: 500px;
+  /* এখানে পরিবর্তন */
+  padding: 14px 18px; /* প্যাডিং সামান্য বাড়ানো হলো */
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.2), 0px 1px 0px rgba(0, 0, 0, 0.05); /* শ্যাডো সামান্য গাঢ় করা হলো */
+  border-radius: 8px; /* বর্ডার রেডিয়াস বাড়ানো হলো */
+  background: #2d3748; /* ডার্ক থিমের জন্য গাঢ় ধূসর ব্যাকগ্রাউন্ড */
+  border: 1px solid #4a5568; /* হালকা বর্ডার যোগ করা হলো */
+}
+
+/* ফোকাস স্টাইল */
+.StripeElement--focus,
+.StripeElementIdeal--focus,
+.StripeElementP24--focus,
+.StripeElementEPS--focus,
+.StripeElementFpx--focus {
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3), 0px 1px 3px rgba(0, 0, 0, 0.1); /* ফোকাসে আরও স্পষ্ট শ্যাডো */
+  border-color: #63b3ed; /* ফোকাসে হালকা নীল বর্ডার */
+  -webkit-transition: all 200ms ease-in-out; /* ট্রানজিশন সামান্য বাড়ানো হলো */
+  transition: all 200ms ease-in-out;
+}
+
+/* লোডিং স্টাইল */
+.StripeElement.loading {
+  height: 48px; /* প্যাডিং বৃদ্ধির সাথে সামঞ্জস্যপূর্ণ উচ্চতা */
+  opacity: 0.7;
+}
+
+/* নির্দিষ্ট পেমেন্ট মেথডের জন্য অতিরিক্ত স্টাইল */
+.StripeElementIdeal,
+.StripeElementP24,
+.StripeElementEPS,
+.StripeElementFpx {
+  padding: 0;
+}

@@ -17,6 +17,7 @@ import WorkerWithdrawals from "../Pages/DashboardWorkerPages/WorkerWithdrawals/W
 import PrivetRoute from "../Provider/PrivetRoute";
 import ErrorPage from "../Pages/ErrorPage/ErrorPage";
 import LoadingSpinner from "../Shared/LoadingSpinner";
+import axios from "axios";
 
 
 
@@ -95,7 +96,8 @@ export const router = createBrowserRouter([
         path: "purchase-coins",
         element: <PrivetRoute>
           <PurchaseCoinComponent></PurchaseCoinComponent>
-        </PrivetRoute>
+        </PrivetRoute>,
+        loader: () => axios.get(`${import.meta.env.VITE_API_URL}/coins`)
       },
       {
         path: "payment-history",
