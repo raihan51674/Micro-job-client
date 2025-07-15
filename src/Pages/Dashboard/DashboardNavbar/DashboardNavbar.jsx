@@ -1,13 +1,28 @@
-import React from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router'; // Fixed import
 import { Bell, Briefcase, Coins } from 'lucide-react'; // Added Coins icon
+import { AuthContext } from '../../../Provider/AuthProvider';
+import axios from 'axios';
 
 const DashboardNavbar = ({
-    userImage,
-    userName = 'User Name',
-    userRole = 'Guest',
-    availableCoins = 0,
+    userRole = 'Buyer',
 }) => {
+
+    const { user } = useContext(AuthContext);
+    const [availableCoins, setAvailableCoins] = useState(0)
+
+    useEffect(() => {
+        const fetchCoinData = async () => {
+            if (user?.email) {
+                const {data} = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`)
+                setAvailableCoins(data)
+            }
+        }
+        fetchCoinData()
+
+    }, [user])
+
+
     return (
         <header
             className="w-full px-6 lg:px-14 py-3 flex justify-between items-center sticky top-0 z-30 backdrop-blur-xl border-b border-white/10 shadow-md"
@@ -47,15 +62,15 @@ const DashboardNavbar = ({
 
                 {/* Coins + User Image */}
                 <div className="flex items-center gap-2 bg-black/30 px-3 py-1 rounded-full border border-white/10 shadow-sm">
-                    {userImage ? (
+                    {user?.photoURL ? (
                         <img
-                            src={userImage}
-                            alt={`${userName}'s avatar`}
+                            src={user?.photoURL}
+                            alt={`${user?.displayName}'s avatar`}
                             className="h-9 w-9 rounded-full object-cover border-2 border-blue-500"
                         />
                     ) : (
                         <div className="h-9 w-9 rounded-full bg-gray-600 flex items-center justify-center text-white font-semibold border-2 border-blue-500">
-                            {userName.charAt(0).toUpperCase()}
+                            {user?.displayName.charAt(0).toUpperCase()}
                         </div>
                     )}
                     <div className="flex items-center gap-1 text-sm font-medium text-gray-100">
@@ -67,7 +82,7 @@ const DashboardNavbar = ({
                 {/* User Name + Role */}
                 <div className="flex flex-col items-end text-right">
                     <span className="text-sm text-blue-300 font-semibold capitalize">{userRole}</span>
-                    <span className="text-sm text-gray-300 truncate max-w-[120px]">{userName}</span>
+                    <span className="text-sm text-gray-300 truncate max-w-[120px]">{user?.displayName}</span>
                 </div>
             </div>
         </header>

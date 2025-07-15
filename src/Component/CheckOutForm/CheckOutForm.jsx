@@ -72,7 +72,6 @@ const CheckoutForm = ({ packageDetails, onConfirmPurchase, isProcessing, cardEle
             setCardError(confirmError?.message || 'Payment confirmation failed.');
             onConfirmPurchase(packageDetails, null, confirmError);
         } else {
-            console.log('[Payment Intent]', paymentIntent);
             if (paymentIntent.status === 'succeeded') {
                 // Payment successful!
                 if (onConfirmPurchase) {

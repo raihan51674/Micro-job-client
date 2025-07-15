@@ -1,21 +1,33 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Menu, X, Code, LogIn, UserPlus, Briefcase, LayoutDashboard, Wallet, UserCircle, LogOut } from 'lucide-react';
 import { Link } from 'react-router'; // Ensure this is react-router-dom for web apps
 import { AuthContext } from '../Provider/AuthProvider'; // Make sure this path is correct
+import axios from 'axios';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // This availableCoin should ideally come from your user context or fetched data, not a fixed state here.
-  const [availableCoin, setAvailableCoin] = useState(120.50);
+  const [availableCoin, setAvailableCoin] = useState(0);
 
   const { logOut, user } = useContext(AuthContext); // Get user and logOut from AuthContext
+
+  useEffect(() => {
+    const fetchCoinData = async () => {
+      if (user?.email) {
+        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`)
+        setAvailableCoin(data)
+      }
+    }
+    fetchCoinData()
+
+  }, [user])
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
   const handleLogout = () => {
-    logOut(); 
+    logOut();
     toggleMenu();
   };
 

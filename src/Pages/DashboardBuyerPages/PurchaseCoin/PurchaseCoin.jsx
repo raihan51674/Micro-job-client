@@ -102,15 +102,14 @@ const PurchaseCoinComponent = () => {
                 status: 'succeeded',
             };
 
-            console.log("Payment Succeeded! Data to save:", purchaseDataToSave);
-            toast.success(`Payment Succeeded! You've purchased ${packageToPurchase.coins + packageToPurchase.bonus} coins.`, { id: 'payment-toast' });
-
             // Here you would typically make an API call to your backend
             // For example:
             
             try {
                 const {data} = await axios.post(`${import.meta.env.VITE_API_URL}/save-purchase`, purchaseDataToSave);
-                console.log(data);
+                if(data?.insertedId) {
+                   toast.success(`Payment Succeeded! You've purchased ${packageToPurchase.coins + packageToPurchase.bonus} coins.`, { id: 'payment-toast' }); 
+                }
                 
             } catch (backendError) {
                 console.error("Error saving purchase to backend:", backendError);
