@@ -17,7 +17,7 @@ import {
 import registrationLotti from '../../assets/Lottie/registration-lottie.json';
 import { Link, useNavigate } from 'react-router'; // Use react-router-dom for Link and useNavigate
 import { AuthContext } from '../../Provider/AuthProvider';
-import { imageUpload } from '../../API/utils'; // Ensure this path is correct and function works as expected
+import { imageUpload, saveUsersInDb } from '../../API/utils'; // Ensure this path is correct and function works as expected
 
 const Registration = () => {
     const { createUser, loading, signInWithGoogle, updateUserProfile, setUser } = useContext(AuthContext);
@@ -90,14 +90,24 @@ const Registration = () => {
             return;
         }
 
-        const userData = { name, email, imageURL, role, password, confirmPassword };
-        console.log("user data is", userData);
+        // const userData = { name, email, imageURL, role, password, confirmPassword };
+        // console.log("user data is", userData);
 
         try {
             const result = await createUser(email, password);
             const user = result?.user;
             await updateUserProfile(name, imageURL);
             setUser({ ...user, displayName: name, photoURL: imageURL });
+
+            const userData = {
+                name: result?.user?.displayName,
+                email: result?.user?.email,
+                image: result?.user?.photoURL,
+                role: role,
+
+            }
+            await saveUsersInDb(userData)
+
 
             Swal.fire({
                 title: 'Registration Successful!',

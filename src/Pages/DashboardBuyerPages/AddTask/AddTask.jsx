@@ -16,52 +16,74 @@ import { imageUpload } from '../../../API/utils';
 import axios from 'axios';
 import { useContext } from 'react';
 import { AuthContext } from '../../../Provider/AuthProvider';
+import useUserCoins from '../../../Hooks/useUserCoins';
+import { useNavigate } from 'react-router';
 
 
 const AddTask = () => {
-    const {user} = useContext(AuthContext);
+    const { user } = useContext(AuthContext);
+    const { coins, isLoading, refetch } = useUserCoins();
 
+    const navigate = useNavigate()
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const form = e.target;
         const taskTitle = form.task_title.value;
         const taskDetails = form.task_detail.value;
-        const requiredWorkers = form.required_workers.value;
-        const payableAmount = form.payable_amount.value;
+        const requiredWorkers = parseInt(form.required_workers.value);
+        const payableAmount = parseInt(form.payable_amount.value);
         const completationDate = form.completion_date.value;
         const submissionInfo = form.submission_info.value;
         const taskImageFile = form.task_image_file.files[0];
 
         const imageURL = await imageUpload(taskImageFile)
 
-        const taskData = { 
-            taskTitle, 
-            taskDetails, 
-            requiredWorkers: parseInt(requiredWorkers), 
-            payableAmount: parseInt(payableAmount), 
-            completationDate, 
-            submissionInfo, 
-            image: imageURL,
-            buyer: {
-                name: user?.displayName,
-                email: user?.email,
-                buyer_image: user?.photoURL
-            }
-         }
-
-        const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/add-task`, taskData)
-
-
-        if (data?.insertedId) {
-            // Show SweetAlert
+        if (requiredWorkers * payableAmount > coins) {
             Swal.fire({
-                title: 'Task Added Successfully!',
-                icon: 'success',
-                confirmButtonText: 'Great!',
-
-            })
+                icon: "error",
+                title: "You don't add task...",
+                text: "Not available Coin. Purchase Coin ",
+            });
+            return navigate("/dashboard/purchase-coins")
         }
+
+
+
+        if (requiredWorkers * payableAmount <= coins) {
+            const taskData = {
+                taskTitle,
+                taskDetails,
+                requiredWorkers: parseInt(requiredWorkers),
+                payableAmount: parseInt(payableAmount),
+                completationDate,
+                submissionInfo,
+                image: imageURL,
+                buyer: {
+                    name: user?.displayName,
+                    email: user?.email,
+                    buyer_image: user?.photoURL
+                }
+            }
+
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/add-task`, taskData)
+
+
+            if (data?.insertedId) {
+                // Show SweetAlert
+                Swal.fire({
+                    title: 'Task Added Successfully!',
+                    icon: 'success',
+                    confirmButtonText: 'Great!',
+
+                })
+                coins - requiredWorkers * payableAmount
+            }
+            refetch()
+        }
+
+
+
     };
 
     return (

@@ -15,6 +15,7 @@ import {
 import { Briefcase } from 'lucide-react';
 import loginLottie from '../../assets/Lottie/login-lottie.json';
 import { AuthContext } from '../../Provider/AuthProvider';
+import { saveUsersInDb } from '../../API/utils';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -81,7 +82,16 @@ const Login = () => {
         setIsLoading(true);
 
         try {
-            await signIn(email, password);
+            const result = await signIn(email, password);
+            const userData = {
+                name: result?.user?.displayName,
+                email: result?.user?.email,
+                image: result?.user?.photoURL,
+            }
+
+            await saveUsersInDb(userData)
+
+
             Swal.fire({
                 title: 'Login Successful!',
                 text: 'Welcome back! Redirecting to dashboard...',

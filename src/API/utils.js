@@ -15,3 +15,10 @@ export const imageUpload = async imageData => {
     const { data } = await axios.post(uploadUrl, formData);
     return data?.data?.display_url;
 }
+
+
+// save or update user data
+export const saveUsersInDb = async user => {
+    const {data} = await axios.post(`${import.meta.env.VITE_API_URL}/users`, user)
+    console.log("user data", data);
+}
