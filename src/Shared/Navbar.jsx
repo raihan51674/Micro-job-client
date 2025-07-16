@@ -1,27 +1,21 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Menu, X, Code, LogIn, UserPlus, Briefcase, LayoutDashboard, Wallet, UserCircle, LogOut } from 'lucide-react';
 import { Link } from 'react-router'; // Ensure this is react-router-dom for web apps
-import { AuthContext } from '../Provider/AuthProvider'; // Make sure this path is correct
-import axios from 'axios';
+import { AuthContext } from '../Provider/AuthProvider';
+import useRole from '../Hooks/useRole';
+import useUserCoins from '../Hooks/useUserCoins';
+import LoadingSpinner from './LoadingSpinner';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // This availableCoin should ideally come from your user context or fetched data, not a fixed state here.
-  const [availableCoin, setAvailableCoin] = useState(0);
 
   const { logOut, user } = useContext(AuthContext); // Get user and logOut from AuthContext
 
-  useEffect(() => {
-    const fetchCoinData = async () => {
-      if (user?.email) {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`)
-        setAvailableCoin(data)
-      }
-    }
-    fetchCoinData()
+  const { role, isRoleLoading } = useRole();
+  const { coins, isLoading, refetch } = useUserCoins();
 
-  }, [user])
-
+  
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
@@ -30,6 +24,7 @@ const Navbar = () => {
     logOut();
     toggleMenu();
   };
+// if (isLoading || isRoleLoading) return <LoadingSpinner></LoadingSpinner>; // Use isLoading from useUserCoins
 
   return (
     <nav className="bg-black bg-opacity-40 backdrop-blur-lg shadow-2xl sticky top-0 z-50 border-b border-white/10">
@@ -66,10 +61,13 @@ const Navbar = () => {
                   </Link>
 
                   {/* Available Coin Display */}
-                  <div className="flex items-center px-4 py-3 bg-white/10 backdrop-blur-sm text-white rounded-xl border border-white/20">
+                  {
+                    role !== "admin" && <div className="flex items-center px-4 py-3 bg-white/10 backdrop-blur-sm text-white rounded-xl border border-white/20">
                     <Wallet className="h-4 w-4 mr-2 text-green-400" />
-                    <span className="font-medium">Coins: {availableCoin.toFixed(2)}</span>
+                    <span className="font-medium">Coins: {coins}</span>
                   </div>
+                  }
+
 
                   {/* User Profile and Logout Button */}
                   <div className="relative group">
@@ -208,7 +206,7 @@ const Navbar = () => {
 
               <div className="flex items-center w-full px-4 py-3 rounded-xl text-white/90 bg-white/5 border border-white/10">
                 <Wallet className="h-5 w-5 mr-3 text-green-400" />
-                <span className="font-medium">Coins: {availableCoin.toFixed(2)}</span>
+                <span className="font-medium">Coins: {coins}</span>
               </div>
 
               <Link

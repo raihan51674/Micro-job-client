@@ -86,16 +86,17 @@ const Login = () => {
             const result = await signIn(email, password);
             const user = result?.user;
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`);
-            const coin = res?.data || 0;
+            // console.log(res); // এখানে res এর ভ্যালু দেখুন: { data: { currentCoin: 100 } }
+            const currentCoin = res?.data?.currentCoin || 0; // শুধু সংখ্যাটি নিন
 
             const userData = {
                 name: result?.user?.displayName,
                 email: result?.user?.email,
                 image: result?.user?.photoURL,
-                coin
-            }
+                coin: currentCoin // শুধু সংখ্যা পাঠান
+            };
 
-            await saveUsersInDb(userData)
+            await saveUsersInDb(userData);
 
             Swal.fire({
                 title: 'Login Successful!',
@@ -126,16 +127,16 @@ const Login = () => {
             const result = await signInWithGoogle();
             const user = result?.user;
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`);
-             const coin = res?.data || 0;
+            const currentCoin = res?.data?.currentCoin || 0; // শুধু সংখ্যাটি নিন
 
             const userData = {
                 name: result?.user?.displayName,
                 email: result?.user?.email,
                 image: result?.user?.photoURL,
-                coin
-            }
+                coin: currentCoin // শুধু সংখ্যা পাঠান
+            };
 
-            await saveUsersInDb(userData)
+            await saveUsersInDb(userData);
 
             Swal.fire({
                 title: 'Google Sign-In Successful!',

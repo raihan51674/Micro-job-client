@@ -18,6 +18,7 @@ import { useContext } from 'react';
 import { AuthContext } from '../../../Provider/AuthProvider';
 import useUserCoins from '../../../Hooks/useUserCoins';
 import { useNavigate } from 'react-router';
+import LoadingSpinner from '../../../Shared/LoadingSpinner';
 
 
 const AddTask = () => {
@@ -93,6 +94,7 @@ const AddTask = () => {
 
 
     };
+    if(isLoading) return <LoadingSpinner></LoadingSpinner>
 
     return (
         <motion.div
