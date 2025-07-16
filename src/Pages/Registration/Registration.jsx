@@ -63,7 +63,7 @@ const Registration = () => {
         const name = form.name.value;
         const email = form.email.value;
         const imageFile = form.image_file.files[0];
-        const role = form.role.value;
+        const role = form.role.value; // সিলেক্ট করা রোল
         const password = form.password.value;
         const confirmPassword = form.confirmPassword.value;
 
@@ -93,27 +93,23 @@ const Registration = () => {
             return;
         }
 
-        // const userData = { name, email, imageURL, role, password, confirmPassword };
-        // console.log("user data is", userData);
-
         try {
             const result = await createUser(email, password);
             const user = result?.user;
+
             await updateUserProfile(name, imageURL);
             setUser({ ...user, displayName: name, photoURL: imageURL });
 
-             const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user?.email}`);
-             const coin = res?.data || 0;
-
+            // ** এখানে my-coins API কল করার দরকার নেই **
+            // সার্ভার নিজেই রোল অনুযায়ী কয়েন সেট করবে।
             const userData = {
                 name: result?.user?.displayName,
                 email: result?.user?.email,
                 image: result?.user?.photoURL,
-                role: role,
-                coin
-
+                role: role, // সার্ভারে রোল পাঠাচ্ছি
+                // ** coin এখান থেকে পাঠাচ্ছি না **
             }
-            await saveUsersInDb(userData)
+            await saveUsersInDb(userData); // সার্ভারে ইউজার ডেটা সেভ করার জন্য
 
             Swal.fire({
                 title: 'Registration Successful!',
@@ -143,17 +139,24 @@ const Registration = () => {
             const result = await signInWithGoogle();
             const user = result?.user;
 
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user?.email}`);
-             const coin = res?.data || 0;
-
+            // Google Sign-up এর ক্ষেত্রে role সরাসরি form থেকে আসে না।
+            // যদি Google Sign-up এর সময়ও রোল সিলেক্ট করার অপশন দিতে চান,
+            // তাহলে UI তে সেটি যোগ করে setSelectedRole স্টেট ব্যবহার করতে হবে।
+            // আপাতত, যদি role পাঠানো না হয়, সার্ভার ডিফল্ট 'worker' সেট করবে।
             const userData = {
                 name: result?.user?.displayName,
                 email: result?.user?.email,
                 image: result?.user?.photoURL,
-                coin
-
+                // Google sign-up এর ক্ষেত্রে ব্যবহারকারী সাধারণত role নির্বাচন করে না।
+                // যদি এটি প্রয়োজন হয়, তবে এটি UI তে যোগ করতে হবে এবং selectedRole স্টেট থেকে পেতে হবে।
+                // আপাতত, সার্ভার এটিকে 'worker' হিসাবে ডিফল্ট করবে যদি না পাঠানো হয়।
+                // উদাহরণস্বরূপ, যদি আপনি Google Sign-up এর সময় ডিফল্ট role 'worker' সেট করতে চান:
+                // role: 'worker',
+                // অথবা যদি ইউজারকে role বেছে নিতে দিতে চান:
+                role: selectedRole || 'worker', // যদি setSelectedRole ব্যবহার করেন
+                // ** coin এখান থেকে পাঠাচ্ছি না **
             }
-            await saveUsersInDb(userData)
+            await saveUsersInDb(userData);
 
             navigate("/dashboard");
             Swal.fire({
@@ -172,7 +175,7 @@ const Registration = () => {
                 confirmButtonColor: '#8B5CF6'
             });
         }
-    };
+    };;
 
     return (
         <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4 font-sans antialiased">

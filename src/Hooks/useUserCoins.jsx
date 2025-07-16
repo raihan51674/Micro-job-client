@@ -12,7 +12,7 @@ const useUserCoins = () => {
     enabled: !!user?.email,
     queryFn: async () => {
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`);
-      return res.data?.currentCoin; // This should be totalCoins
+      return res?.data?.currentCoin; // This should be totalCoins
     },
   });
 
