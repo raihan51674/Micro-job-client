@@ -18,6 +18,7 @@ import PrivetRoute from "../Provider/PrivetRoute";
 import ErrorPage from "../Pages/ErrorPage/ErrorPage";
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import axios from "axios";
+import TaskDetails from "../Pages/DashboardWorkerPages/TaskDetails/TaskDetails";
 
 
 
@@ -89,8 +90,12 @@ export const router = createBrowserRouter([
         element: <PrivetRoute>
           <MyTasks></MyTasks>
         </PrivetRoute>,
-        loader: ({params}) => fetch(`${import.meta.env.VITE_API_URL}/my-tasks/${params?.email}`).then(res => res.json()),
+        loader: ({ params }) => fetch(`${import.meta.env.VITE_API_URL}/my-tasks/${params?.email}`).then(res => res.json()),
         hydrateFallbackElement: <LoadingSpinner></LoadingSpinner>
+      },
+      {
+        path: 'task/:id', 
+        element: <TaskDetails />,
       },
       {
         path: "purchase-coins",
