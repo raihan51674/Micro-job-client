@@ -64,7 +64,7 @@ const PaymentModal = ({ isOpen, onClose, packageDetails, onConfirmPurchase, isPr
                             Confirm Purchase: {packageDetails.name}
                         </h3>
                         <p className="text-gray-300 text-center mb-6">
-                            You are about to purchase **<span className="text-yellow-400">{packageDetails.coins + packageDetails.bonus} Coins</span>** for **<span className="text-green-400">${packageDetails.price}</span>**.
+                            You are about to purchase **<span className="text-yellow-400">{packageDetails.coins} Coins</span>** for **<span className="text-green-400">${packageDetails.price}</span>**.
                         </p>
 
                         <div className="space-y-4">

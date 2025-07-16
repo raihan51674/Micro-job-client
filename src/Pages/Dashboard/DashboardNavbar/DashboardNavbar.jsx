@@ -1,29 +1,23 @@
 import React, { useContext } from 'react';
-import { Link } from 'react-router'; // Fixed import
-import { Bell, Briefcase, Coins } from 'lucide-react'; // Added Coins icon
+import { Link } from 'react-router'; // ✅ Changed from 'react-router' to 'react-router-dom'
+import { Bell, Briefcase, Coins } from 'lucide-react';
 import { AuthContext } from '../../../Provider/AuthProvider';
-import axios from 'axios';
-import { useQuery } from '@tanstack/react-query';
+// import axios from 'axios'; // Not needed if using useUserCoins directly for coin data
+// import { useQuery } from '@tanstack/react-query'; // Not needed if using useUserCoins directly for coin data
 import LoadingSpinner from '../../../Shared/LoadingSpinner';
 import useRole from '../../../Hooks/useRole';
+import useUserCoins from '../../../Hooks/useUserCoins';
 
 const DashboardNavbar = () => {
-
     const { user } = useContext(AuthContext);
 
-    const {role, isRoleLoading} = useRole()
+    const { role, isRoleLoading } = useRole();
+    const { coins, isLoading, refetch } = useUserCoins();
 
-    const { isPending, error, data } = useQuery({
-        queryKey: ['coins'],
-        queryFn: async() =>
-            await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`)
-    })
 
-    
 
-    if (isPending || isRoleLoading) return <LoadingSpinner></LoadingSpinner>
+    if (isLoading || isRoleLoading) return <LoadingSpinner></LoadingSpinner>; // Use isLoading from useUserCoins
 
-    if (error) return `${error.message}`
 
     return (
         <header
@@ -36,7 +30,6 @@ const DashboardNavbar = () => {
         >
             {/* Left: Logo & Hamburger */}
             <div className="flex items-center gap-4">
-
                 {/* Logo */}
                 <Link to="/" className="flex items-center space-x-2">
                     <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg p-1 shadow-sm">
@@ -77,7 +70,7 @@ const DashboardNavbar = () => {
                     )}
                     <div className="flex items-center gap-1 text-sm font-medium text-gray-100">
                         <Coins className="h-4 w-4 text-yellow-400" />
-                        {data?.data}
+                        {coins} {/* ✅ Display coins from useUserCoins */}
                     </div>
                 </div>
 

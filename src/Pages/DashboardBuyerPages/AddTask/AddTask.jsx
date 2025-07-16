@@ -39,7 +39,9 @@ const AddTask = () => {
 
         const imageURL = await imageUpload(taskImageFile)
 
-        if (requiredWorkers * payableAmount > coins) {
+        const coinToUpdate = Math.round(requiredWorkers * payableAmount)
+
+        if (coinToUpdate > coins) {
             Swal.fire({
                 icon: "error",
                 title: "You don't add task...",
@@ -50,7 +52,7 @@ const AddTask = () => {
 
 
 
-        if (requiredWorkers * payableAmount <= coins) {
+        if (coinToUpdate <= coins) {
             const taskData = {
                 taskTitle,
                 taskDetails,
@@ -77,8 +79,14 @@ const AddTask = () => {
                     confirmButtonText: 'Great!',
 
                 })
-                coins - requiredWorkers * payableAmount
             }
+
+            const {data: result} = await axios.patch(`${import.meta.env.VITE_API_URL}/decrease-coin/${user?.email}`, {
+                coinToUpdate,
+                status: "decrease"
+            })
+            console.log(result);
+
             refetch()
         }
 

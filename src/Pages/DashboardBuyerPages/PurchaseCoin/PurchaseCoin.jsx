@@ -119,7 +119,7 @@ const PurchaseCoinComponent = () => {
                 userEmail: user.email,
                 userImage: user.photoURL,
                 packageId: packageToPurchase.id,
-                coinsPurchased: packageToPurchase.coins + packageToPurchase.bonus,
+                coinsPurchased: packageToPurchase.coins,
                 pricePaid: packageToPurchase.price,
                 transactionId: transactionId,
                 purchaseDate: new Date().toISOString(),
@@ -141,7 +141,7 @@ const PurchaseCoinComponent = () => {
 
     const calculateSavings = (pkg) => {
         const baseRate = 10;
-        const totalCoins = pkg.coins + pkg.bonus;
+        const totalCoins = pkg.coins;
         const expectedPrice = totalCoins / baseRate;
         const savings = expectedPrice - pkg.price;
         return savings > 0 ? savings : 0;
