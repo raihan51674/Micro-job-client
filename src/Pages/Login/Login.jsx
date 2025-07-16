@@ -16,6 +16,7 @@ import { Briefcase } from 'lucide-react';
 import loginLottie from '../../assets/Lottie/login-lottie.json';
 import { AuthContext } from '../../Provider/AuthProvider';
 import { saveUsersInDb } from '../../API/utils';
+import axios from 'axios';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -83,14 +84,18 @@ const Login = () => {
 
         try {
             const result = await signIn(email, password);
+            const user = result?.user;
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`);
+            const coin = res?.data || 0;
+
             const userData = {
                 name: result?.user?.displayName,
                 email: result?.user?.email,
                 image: result?.user?.photoURL,
+                coin
             }
 
             await saveUsersInDb(userData)
-
 
             Swal.fire({
                 title: 'Login Successful!',
@@ -119,15 +124,18 @@ const Login = () => {
         setIsGoogleLoading(true);
         try {
             const result = await signInWithGoogle();
+            const user = result?.user;
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`);
+             const coin = res?.data || 0;
 
             const userData = {
                 name: result?.user?.displayName,
                 email: result?.user?.email,
                 image: result?.user?.photoURL,
+                coin
             }
 
             await saveUsersInDb(userData)
-
 
             Swal.fire({
                 title: 'Google Sign-In Successful!',

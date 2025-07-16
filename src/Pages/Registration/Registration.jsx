@@ -18,9 +18,12 @@ import registrationLotti from '../../assets/Lottie/registration-lottie.json';
 import { Link, useNavigate } from 'react-router'; // Use react-router-dom for Link and useNavigate
 import { AuthContext } from '../../Provider/AuthProvider';
 import { imageUpload, saveUsersInDb } from '../../API/utils'; // Ensure this path is correct and function works as expected
+import axios from 'axios';
 
 const Registration = () => {
     const { createUser, loading, signInWithGoogle, updateUserProfile, setUser } = useContext(AuthContext);
+
+
     const navigate = useNavigate();
 
     // State for password visibility
@@ -99,15 +102,18 @@ const Registration = () => {
             await updateUserProfile(name, imageURL);
             setUser({ ...user, displayName: name, photoURL: imageURL });
 
+             const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user?.email}`);
+             const coin = res?.data || 0;
+
             const userData = {
                 name: result?.user?.displayName,
                 email: result?.user?.email,
                 image: result?.user?.photoURL,
                 role: role,
+                coin
 
             }
             await saveUsersInDb(userData)
-
 
             Swal.fire({
                 title: 'Registration Successful!',
@@ -135,15 +141,19 @@ const Registration = () => {
     const handleGoogleSignUp = async () => {
         try {
             const result = await signInWithGoogle();
+            const user = result?.user;
+
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user?.email}`);
+             const coin = res?.data || 0;
 
             const userData = {
                 name: result?.user?.displayName,
                 email: result?.user?.email,
                 image: result?.user?.photoURL,
+                coin
 
             }
             await saveUsersInDb(userData)
-
 
             navigate("/dashboard");
             Swal.fire({
