@@ -5,6 +5,7 @@ import { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../../Provider/AuthProvider";
 import toast from "react-hot-toast";
+import { updateCoinInDb } from "../../API/utils";
 
 // Props received: packageDetails, onConfirmPurchase, isProcessing, cardElementOptions
 const CheckoutForm = ({ packageDetails, onConfirmPurchase, isProcessing, cardElementOptions }) => {
@@ -31,13 +32,16 @@ const CheckoutForm = ({ packageDetails, onConfirmPurchase, isProcessing, cardEle
                     price: packageDetails.price // Price
                 });
                 setClientSecret(data?.clientSecret);
+
+                updateCoinInDb(user?.email, packageDetails.coins + packageDetails.bonus)
+
             } catch (error) {
                 console.error("Error fetching client secret:", error);
                 setCardError("Failed to initialize payment. Please try again.");
             }
         };
         getClientSecret();
-    }, [packageDetails, clientSecret]); // Re-run effect if packageDetails or clientSecret changes
+    }, [packageDetails, clientSecret, user]); // Re-run effect if packageDetails or clientSecret changes
 
     const handleSubmit = async (event) => {
         event.preventDefault();

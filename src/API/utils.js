@@ -22,3 +22,14 @@ export const saveUsersInDb = async user => {
     const {data} = await axios.post(`${import.meta.env.VITE_API_URL}/users`, user)
     console.log("user data", data);
 }
+
+
+// update coin data in user data
+
+export const updateCoinInDb = async (email, addedCoin) => {
+    const res = await axios.patch(`${import.meta.env.VITE_API_URL}/update-coin`, {
+        email,
+        addedCoin
+    });
+    return res.data;
+};
