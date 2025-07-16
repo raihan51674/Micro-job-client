@@ -79,10 +79,10 @@ const TaskDetails = () => {
         const submissionData = {
             task_id: task._id,
             task_title: task.task_title,
-            payable_amount: task.payableAmount,
-            worker_email: user.email,
+            payable_amount: task?.payableAmount,
+            worker_email: user?.email,
             submission_details: submissionDetails,
-            worker_name: user.displayName || 'Unknown Worker',
+            worker_name: user?.displayName || 'Unknown Worker',
             Buyer_name: task.buyer?.name,
             Buyer_email: task.buyer?.email,
             current_date: new Date().toISOString(),
