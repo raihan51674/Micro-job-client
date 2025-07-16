@@ -1,12 +1,14 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutDashboard, ArrowRightCircle, X, Briefcase } from 'lucide-react';
-import { NavLink} from 'react-router';
+import { NavLink } from 'react-router';
 import toast from 'react-hot-toast';
 import { AuthContext } from '../../../Provider/AuthProvider';
 import WorkerNavigation from '../../../Component/DashboardNav/WorkerNavigation/WorkerNavigation';
 import BuyerNavigation from '../../../Component/DashboardNav/BuyerNavigation/BuyerNavigation';
 import AdminNavigation from '../../../Component/DashboardNav/AdminNavigation/AdminNavigation';
+import useRole from '../../../Hooks/useRole';
+import LoadingSpinner from '../../../Shared/LoadingSpinner';
 
 const DashboardAside = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -33,8 +35,9 @@ const DashboardAside = () => {
         toast.success('Successfully Logout!');
     };
 
-    
+    const { role, isRoleLoading } = useRole();
 
+    if (isRoleLoading) return <LoadingSpinner></LoadingSpinner>
     return (
         <div className="flex flex-col text-gray-100"
             style={{
@@ -115,9 +118,18 @@ const DashboardAside = () => {
                                         </NavLink>
                                     </motion.div>
                                 </li>
-                                <WorkerNavigation />
-                                <BuyerNavigation />
-                                <AdminNavigation />
+                                {
+                                    role === "worker" && <WorkerNavigation />
+                                }
+
+                                {
+                                    role === "buyer" && <BuyerNavigation />
+                                }
+
+                                {
+                                    role === "admin" && <AdminNavigation />
+                                }
+
                             </ul>
                         </nav>
 
@@ -216,9 +228,20 @@ const DashboardAside = () => {
                                             </NavLink>
                                         </motion.div>
                                     </li>
-                                    <WorkerNavigation />
+                                    {/* <WorkerNavigation />
                                     <BuyerNavigation />
-                                    <AdminNavigation />
+                                    <AdminNavigation /> */}
+                                    {
+                                        role === "worker" && <WorkerNavigation />
+                                    }
+
+                                    {
+                                        role === "buyer" && <BuyerNavigation />
+                                    }
+
+                                    {
+                                        role === "admin" && <AdminNavigation />
+                                    }
                                 </ul>
                             </nav>
 

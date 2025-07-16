@@ -1,18 +1,17 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router'; // Fixed import
 import { Bell, Briefcase, Coins } from 'lucide-react'; // Added Coins icon
 import { AuthContext } from '../../../Provider/AuthProvider';
 import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import LoadingSpinner from '../../../Shared/LoadingSpinner';
+import useRole from '../../../Hooks/useRole';
 
-const DashboardNavbar = ({
-    userRole = 'Buyer',
-}) => {
+const DashboardNavbar = () => {
 
     const { user } = useContext(AuthContext);
 
-
+    const {role, isRoleLoading} = useRole()
 
     const { isPending, error, data } = useQuery({
         queryKey: ['coins'],
@@ -22,7 +21,7 @@ const DashboardNavbar = ({
 
     
 
-    if (isPending) return <LoadingSpinner></LoadingSpinner>
+    if (isPending || isRoleLoading) return <LoadingSpinner></LoadingSpinner>
 
     if (error) return `${error.message}`
 
@@ -84,7 +83,7 @@ const DashboardNavbar = ({
 
                 {/* User Name + Role */}
                 <div className="flex flex-col items-end text-right">
-                    <span className="text-sm text-blue-300 font-semibold capitalize">{userRole}</span>
+                    <span className="text-sm text-blue-300 font-semibold capitalize">{role}</span>
                     <span className="text-sm text-gray-300 truncate max-w-[120px]">{user?.displayName}</span>
                 </div>
             </div>
