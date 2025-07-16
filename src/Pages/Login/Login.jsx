@@ -100,7 +100,7 @@ const Login = () => {
                 showConfirmButton: false,
                 confirmButtonColor: '#8B5CF6'
             });
-            navigate("/");
+            navigate("/dashboard");
         } catch (error) {
             console.error(error);
             Swal.fire({
@@ -118,7 +118,17 @@ const Login = () => {
     const handleGoogleSignIn = async () => {
         setIsGoogleLoading(true);
         try {
-            await signInWithGoogle();
+            const result = await signInWithGoogle();
+
+            const userData = {
+                name: result?.user?.displayName,
+                email: result?.user?.email,
+                image: result?.user?.photoURL,
+            }
+
+            await saveUsersInDb(userData)
+
+
             Swal.fire({
                 title: 'Google Sign-In Successful!',
                 text: 'Welcome! Redirecting to dashboard...',
@@ -127,7 +137,7 @@ const Login = () => {
                 showConfirmButton: false,
                 confirmButtonColor: '#8B5CF6'
             });
-            navigate("/");
+            navigate("/dashboard");
         } catch (error) {
             console.error(error);
             Swal.fire({

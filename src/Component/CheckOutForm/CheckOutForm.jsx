@@ -4,6 +4,7 @@ import "./common.css";
 import { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../../Provider/AuthProvider";
+import toast from "react-hot-toast";
 
 // Props received: packageDetails, onConfirmPurchase, isProcessing, cardElementOptions
 const CheckoutForm = ({ packageDetails, onConfirmPurchase, isProcessing, cardElementOptions }) => {
@@ -76,6 +77,7 @@ const CheckoutForm = ({ packageDetails, onConfirmPurchase, isProcessing, cardEle
                 // Payment successful!
                 if (onConfirmPurchase) {
                     onConfirmPurchase(packageDetails, paymentIntent.id); // Pass package and transaction ID
+                    toast.success("You Purchase Coin Successfully!!!")
                 } else {
                     console.error("onConfirmPurchase function is not available in CheckoutForm.");
                     setCardError("Payment callback function is missing.");

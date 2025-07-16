@@ -116,7 +116,7 @@ const Registration = () => {
                 confirmButtonText: 'Continue',
                 confirmButtonColor: '#8B5CF6'
             });
-            navigate("/");
+            navigate("/dashboard");
             form.reset(); // Clear the form
             setErrors({}); // Clear validation errors
             setImageFileName('No file chosen'); // Reset file name display
@@ -134,8 +134,18 @@ const Registration = () => {
 
     const handleGoogleSignUp = async () => {
         try {
-            await signInWithGoogle();
-            navigate("/");
+            const result = await signInWithGoogle();
+
+            const userData = {
+                name: result?.user?.displayName,
+                email: result?.user?.email,
+                image: result?.user?.photoURL,
+
+            }
+            await saveUsersInDb(userData)
+
+
+            navigate("/dashboard");
             Swal.fire({
                 title: 'Google Sign-up Successful!',
                 text: 'You have successfully signed in with Google.',
