@@ -6,8 +6,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { AuthContext } from '../../../Provider/AuthProvider';
 
-// আপনার API এর বেস URL, আপনার সার্ভার যে পোর্টে রান করছে তার সাথে ম্যাচ করাতে হবে
-const API_BASE_URL = 'http://localhost:3000';
+
 
 const WorkerHome = () => {
     const [expandedSubmission, setExpandedSubmission] = useState(null);
@@ -25,7 +24,7 @@ const WorkerHome = () => {
     } = useQuery({
         queryKey: ['workerSubmissions', workerEmail], // workerEmail এখন queryKey এর অংশ
         queryFn: async () => {
-            const response = await axios.get(`${API_BASE_URL}/api/worker/submissions?workerEmail=${workerEmail}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/worker/submissions?workerEmail=${workerEmail}`);
             return response.data;
         },
         enabled: !!workerEmail, // যদি workerEmail থাকে তাহলেই কোয়েরি চালাবে
@@ -39,7 +38,7 @@ const WorkerHome = () => {
     } = useQuery({
         queryKey: ['workerMetrics', workerEmail], // workerEmail এখন queryKey এর অংশ
         queryFn: async () => {
-            const response = await axios.get(`${API_BASE_URL}/api/worker/stats?workerEmail=${workerEmail}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/worker/stats?workerEmail=${workerEmail}`);
             return response.data;
         },
         staleTime: 5 * 60 * 1000, // 5 মিনিট
