@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Trash2, User, UserCheck, Briefcase, Search
@@ -7,11 +7,13 @@ import toast from 'react-hot-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useMediaQuery } from 'react-responsive'; 
+import { AuthContext } from '../../../Provider/AuthProvider';
 
 const roles = ['All', 'admin', 'buyer', 'worker'];
 const statuses = ['All', 'active', 'suspended'];
 
 const ManageUsers = () => {
+  const {user} = useContext(AuthContext)
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
@@ -25,7 +27,8 @@ const ManageUsers = () => {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/users-management`);
+      const loggedInUserEmail = `${user?.email}`;
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/users-management?email=${loggedInUserEmail}`);
       return res.data;
     }
   });
