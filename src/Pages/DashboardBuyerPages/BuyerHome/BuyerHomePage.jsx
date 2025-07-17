@@ -1,62 +1,116 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import toast from 'react-hot-toast';
+import Swal from 'sweetalert2'; // SweetAlert2 ইম্পোর্ট করুন
+import withReactContent from 'sweetalert2-react-content'; // React Content এর জন্য ইম্পোর্ট করুন
 import { ClipboardList, CreditCard, Users, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { AuthContext } from '../../../Provider/AuthProvider';
+import LoadingSpinner from '../../../Shared/LoadingSpinner';
+
+// SweetAlert2 React Content ইনিশিয়ালাইজ করুন
+const MySwal = withReactContent(Swal);
 
 const BuyerHomePage = () => {
-    // Mock Data for static component
+    const { user, loading } = useContext(AuthContext); // AuthContext থেকে লগইন করা ইউজারের ডেটা আনা হচ্ছে
+
     const buyerStats = {
         totalTasksAdded: 15,
         pendingSubmissionsCount: 5,
         totalPaymentPaid: 750.50,
     };
 
-    const mockPendingSubmissions = [
-        {
-            id: 'sub1',
-            worker_name: 'Alice Smith',
-            task_title: 'Social Media Post Creation',
-            payable_amount: 15.00,
-            submission_details: {
-                text: 'Completed social media posts for Facebook, Instagram, and Twitter. All drafts attached.',
-                image: 'https://i.ibb.co/q0Z1mF7/social-media-post.jpg',
-                link: 'https://example.com/submission/alice_social_media'
-            },
-        },
-        {
-            id: 'sub2',
-            worker_name: 'Bob Johnson',
-            task_title: 'Data Entry for CRM',
-            payable_amount: 22.50,
-            submission_details: {
-                text: 'CRM data entry for May 2025 completed. See attached spreadsheet for details.',
-                file: 'https://example.com/submission/bob_data_entry.xlsx'
-            },
-        },
-        {
-            id: 'sub3',
-            worker_name: 'Charlie Brown',
-            task_title: 'Blog Post Outline',
-            payable_amount: 10.00,
-            submission_details: {
-                text: 'Outline for "Top 10 Productivity Hacks" blog post. Keyword research included.',
-            },
-        },
-        {
-            id: 'sub4',
-            worker_name: 'Diana Prince',
-            task_title: 'Website Testing - Bug Report',
-            payable_amount: 18.00,
-            submission_details: {
-                text: 'Found 3 critical bugs and 5 minor bugs on the website. Detailed report with screenshots attached.',
-                image: 'https://i.ibb.co/N1J5m7m/website-bug.jpg',
-                report: 'https://example.com/submission/diana_bug_report.pdf'
-            },
-        },
-    ];
+    const queryClient = useQueryClient(); // TanStack Query Client
 
     const [showModal, setShowModal] = useState(false);
     const [selectedSubmission, setSelectedSubmission] = useState(null);
+
+
+    // 1. ডেটা ফেচিং: শুধুমাত্র 'pending' স্ট্যাটাসের সাবমিশনগুলো আনা হচ্ছে
+     const {
+        data: pendingSubmissions = [],
+        isLoading: isLoadingSubmissions,
+        error: submissionsError,
+    } = useQuery({
+        queryKey: ['pendingSubmissionsForBuyer', user?.email],
+        queryFn: async () => {
+            if (!user?.email) {
+                // যদি user.email না থাকে, কোয়েরি চালাবে না
+                return [];
+            }
+            const url = `${import.meta.env.VITE_API_URL}/pending-submissions?buyer_email=${user?.email}`;
+            const { data } = await axios.get(url);
+            console.log("Pending data", data);
+            return data;
+        },
+        enabled: !!user?.email && !loading, // user.email থাকলে এবং user ডেটা লোডিং শেষ হলে কোয়েরি রান করবে
+        // keepPreviousData: true, // যদি user ডেটা লোড হওয়ার সময় পুরনো ডেটা দেখাতে চান
+    });
+    console.log("Pending Submissions Data (Client Side):", pendingSubmissions); // এখানে ডেটা চেক করুন
+    // ...বাকি কোড
+
+    // 2. অ্যাপ্রুভ সাবমিশন মিউটেশন
+    const approveMutation = useMutation({
+        mutationFn: async (submissionId) => {
+            // এই API এন্ডপয়েন্টটি আপনার ব্যাকএন্ডে তৈরি করতে হবে
+            const { data } = await axios.patch(
+                `${import.meta.env.VITE_API_URL}/approve-submission/${submissionId}`
+            );
+            return data;
+        },
+        onSuccess: (data) => {
+            MySwal.fire({
+                icon: 'success',
+                title: 'Submission Approved!',
+                text: `Worker earned $${data.payable_amount}`,
+                confirmButtonText: 'Great!'
+            });
+            queryClient.invalidateQueries(['pendingSubmissionsForBuyer', user?.email]); // ডেটা রিফ্রেশ
+            queryClient.invalidateQueries(['mySubmissions', data.worker_email]); // ওয়ার্কারের সাবমিশন লিস্ট রিফ্রেশ (যদি ওয়ার্কার ভিউ খোলা থাকে)
+            queryClient.invalidateQueries(['users']); // ইউজারের কয়েন আপডেট হয়েছে তাই ইউজার লিস্ট রিফ্রেশ (যদি ইউজার লিস্ট ভিউ থাকে)
+            setShowModal(false); // মডাল বন্ধ করুন
+        },
+        onError: (err) => {
+            MySwal.fire({
+                icon: 'error',
+                title: 'Approval Failed!',
+                text: `Failed to approve submission: ${err.message}`,
+                confirmButtonText: 'OK'
+            });
+            console.error("Approval error:", err);
+        },
+    });
+
+    // 3. রিজেক্ট সাবমিশন মিউটেশন
+    const rejectMutation = useMutation({
+        mutationFn: async (submissionId) => {
+            // এই API এন্ডপয়েন্টটি আপনার ব্যাকএন্ডে তৈরি করতে হবে
+            const { data } = await axios.patch(
+                `${import.meta.env.VITE_API_URL}/reject-submission/${submissionId}`
+            );
+            return data;
+        },
+        onSuccess: (data) => {
+            MySwal.fire({
+                icon: 'error', // Reject এর জন্য error আইকন ব্যবহার করা হয়েছে
+                title: 'Submission Rejected!',
+                text: 'The submission has been rejected.',
+                confirmButtonText: 'OK'
+            });
+            queryClient.invalidateQueries(['pendingSubmissionsForBuyer', user?.email]); // ডেটা রিফ্রেশ
+            queryClient.invalidateQueries(['taskDetails', data.task_id]); // টাস্কের ডিটেইলস রিফ্রেশ (required_workers আপডেট হয়েছে)
+            setShowModal(false); // মডাল বন্ধ করুন
+        },
+        onError: (err) => {
+            MySwal.fire({
+                icon: 'error',
+                title: 'Rejection Failed!',
+                text: `Failed to reject submission: ${err.message}`,
+                confirmButtonText: 'OK'
+            });
+            console.error("Rejection error:", err);
+        },
+    });
 
     const handleViewSubmission = (submission) => {
         setSelectedSubmission(submission);
@@ -64,23 +118,55 @@ const BuyerHomePage = () => {
     };
 
     const handleApprove = (submissionId) => {
-        toast.success(`Submission ${submissionId} Approved!`);
-        console.log(`Approved submission: ${submissionId}`);
+        MySwal.fire({
+            title: 'Are you sure?',
+            text: "You want to APPROVE this submission?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, approve it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                approveMutation.mutate(submissionId);
+            }
+        });
     };
 
     const handleReject = (submissionId) => {
-        toast.error(`Submission ${submissionId} Rejected.`);
-        console.log(`Rejected submission: ${submissionId}`);
+        MySwal.fire({
+            title: 'Are you sure?',
+            text: "You want to REJECT this submission? This cannot be undone!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, reject it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                rejectMutation.mutate(submissionId);
+            }
+        });
     };
+
+    if (isLoadingSubmissions) {
+        return <LoadingSpinner />;
+    }
+
+    if (submissionsError) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-900 text-red-400 text-lg">
+                <p>Error loading submissions: {submissionsError.message}. Please try again later.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 md:p-8 space-y-6 lg:space-y-8 min-h-screen text-gray-100 max-w-7xl mx-auto">
-            {/* Stats Section */}
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white text-center mb-4 sm:mb-6 bg-gradient-to-r from-blue-300 to-purple-300 bg-clip-text text-transparent">
                 Buyer Dashboard Overview
             </h2>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {/* Total Tasks Added Card */}
                 <motion.div
                     whileHover={{ scale: 1.02 }}
@@ -126,12 +212,11 @@ const BuyerHomePage = () => {
                     <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1">${buyerStats.totalPaymentPaid.toFixed(2)}</h3>
                 </motion.div>
             </div>
-
             {/* Tasks To Review Section */}
             <h2 className="text-xl sm:text-2xl font-bold text-white mt-8 sm:mt-12 mb-4 sm:mb-6 bg-gradient-to-r from-teal-300 to-cyan-300 bg-clip-text text-transparent">
                 Tasks To Review
             </h2>
-            
+
             <div className="overflow-x-auto rounded-xl shadow-lg border border-white/10"
                 style={{
                     background: 'rgba(255, 255, 255, 0.03)',
@@ -139,7 +224,7 @@ const BuyerHomePage = () => {
                     WebkitBackdropFilter: 'blur(10px)',
                 }}
             >
-                {mockPendingSubmissions.length > 0 ? (
+                {pendingSubmissions.length > 0 ? (
                     <div className="min-w-full">
                         {/* Table for medium screens and up */}
                         <table className="min-w-full divide-y divide-white/10 hidden sm:table">
@@ -160,9 +245,9 @@ const BuyerHomePage = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {mockPendingSubmissions.map((submission) => (
+                                {pendingSubmissions.map((submission) => (
                                     <motion.tr
-                                        key={submission.id}
+                                        key={submission._id} // MongoDB _id ব্যবহার করা হয়েছে
                                         whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
                                         className="transition-colors duration-200"
                                     >
@@ -170,10 +255,13 @@ const BuyerHomePage = () => {
                                             {submission.worker_name}
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
-                                            {submission.task_title}
+                                            {/* এখানে task_title হিসেবে task_id ব্যবহার করা হয়েছে, কারণ আপনার সাবমিশন ডেটায় task_title সরাসরি নেই।
+                                            যদি task_title দরকার হয়, তাহলে submissionsCollection এ task_title সেভ করার ব্যবস্থা করতে হবে অথবা
+                                            আলাদাভাবে tasksCollection থেকে task_id দিয়ে ফেচ করতে হবে। */}
+                                            {submission.task_id} 
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-emerald-300 font-bold">
-                                            ${submission.payable_amount.toFixed(2)}
+                                            ${submission.payable_amount?.toFixed(2)}
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
                                             <div className="flex items-center justify-center space-x-2">
@@ -185,15 +273,17 @@ const BuyerHomePage = () => {
                                                     <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleApprove(submission.id)}
-                                                    className="p-1 sm:p-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                                    onClick={() => handleApprove(submission._id)} // _id ব্যবহার করা হয়েছে
+                                                    disabled={approveMutation.isLoading || rejectMutation.isLoading} // লোডিং অবস্থায় ডিসেবল করা হয়েছে
+                                                    className="p-1 sm:p-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     title="Approve Submission"
                                                 >
                                                     <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleReject(submission.id)}
-                                                    className="p-1 sm:p-2 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                                    onClick={() => handleReject(submission._id)} // _id ব্যবহার করা হয়েছে
+                                                    disabled={approveMutation.isLoading || rejectMutation.isLoading} // লোডিং অবস্থায় ডিসেবল করা হয়েছে
+                                                    className="p-1 sm:p-2 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     title="Reject Submission"
                                                 >
                                                     <XCircle className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -207,18 +297,18 @@ const BuyerHomePage = () => {
 
                         {/* Cards for small screens */}
                         <div className="sm:hidden space-y-3 p-4">
-                            {mockPendingSubmissions.map((submission) => (
+                            {pendingSubmissions.map((submission) => (
                                 <motion.div
-                                    key={submission.id}
+                                    key={submission._id} // MongoDB _id ব্যবহার করা হয়েছে
                                     whileHover={{ scale: 1.01 }}
                                     className="p-4 rounded-lg border border-white/10 bg-black/20"
                                 >
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <h3 className="font-medium text-white">{submission.task_title}</h3>
+                                            <h3 className="font-medium text-white">Task ID: {submission.task_id}</h3>
                                             <p className="text-sm text-gray-300">{submission.worker_name}</p>
                                         </div>
-                                        <p className="text-emerald-300 font-bold">${submission.payable_amount.toFixed(2)}</p>
+                                        <p className="text-emerald-300 font-bold">${submission.payable_amount?.toFixed(2)}</p>
                                     </div>
                                     <div className="flex justify-center space-x-3 mt-3 pt-3 border-t border-white/10">
                                         <button
@@ -229,15 +319,17 @@ const BuyerHomePage = () => {
                                             <Eye className="h-4 w-4" />
                                         </button>
                                         <button
-                                            onClick={() => handleApprove(submission.id)}
-                                            className="p-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white transition-colors duration-200"
+                                            onClick={() => handleApprove(submission._id)} // _id ব্যবহার করা হয়েছে
+                                            disabled={approveMutation.isLoading || rejectMutation.isLoading}
+                                            className="p-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                             title="Approve Submission"
                                         >
                                             <CheckCircle className="h-4 w-4" />
                                         </button>
                                         <button
-                                            onClick={() => handleReject(submission.id)}
-                                            className="p-2 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors duration-200"
+                                            onClick={() => handleReject(submission._id)} // _id ব্যবহার করা হয়েছে
+                                            disabled={approveMutation.isLoading || rejectMutation.isLoading}
+                                            className="p-2 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                             title="Reject Submission"
                                         >
                                             <XCircle className="h-4 w-4" />
@@ -280,48 +372,29 @@ const BuyerHomePage = () => {
                                 <XCircle className="h-6 w-6 sm:h-7 sm:w-7" />
                             </button>
                             <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4 border-b border-white/20 pb-2">
-                                Submission for "{selectedSubmission.task_title}"
+                                Submission for "Task ID: {selectedSubmission.task_id}" {/* task_id ব্যবহার করা হয়েছে */}
                             </h3>
                             <div className="space-y-3 sm:space-y-4 text-sm sm:text-base">
                                 <p><strong>Worker:</strong> <span className="text-blue-300">{selectedSubmission.worker_name}</span></p>
-                                <p><strong>Payable Amount:</strong> <span className="text-emerald-300 font-bold">${selectedSubmission.payable_amount.toFixed(2)}</span></p>
-                                <p><strong>Details:</strong> <span className="text-gray-300">{selectedSubmission.submission_details.text}</span></p>
-                                {selectedSubmission.submission_details.image && (
-                                    <div>
-                                        <strong>Image:</strong>
-                                        <img
-                                            src={selectedSubmission.submission_details.image}
-                                            alt="Submission"
-                                            className="mt-2 w-full h-auto max-h-48 sm:max-h-64 object-contain rounded-lg border border-white/10 shadow-md"
-                                        />
-                                    </div>
-                                )}
-                                {selectedSubmission.submission_details.link && (
-                                    <p>
-                                        <strong>Link:</strong>{' '}
-                                        <a
-                                            href={selectedSubmission.submission_details.link}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-400 hover:underline break-all"
-                                        >
-                                            {selectedSubmission.submission_details.link}
-                                        </a>
-                                    </p>
-                                )}
-                                {selectedSubmission.submission_details.file && (
-                                    <p>
-                                        <strong>File:</strong>{' '}
-                                        <a
-                                            href={selectedSubmission.submission_details.file}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-blue-400 hover:underline break-all"
-                                        >
-                                            Download File
-                                        </a>
-                                    </p>
-                                )}
+                                <p><strong>Payable Amount:</strong> <span className="text-emerald-300 font-bold">${selectedSubmission.payable_amount?.toFixed(2)}</span></p>
+                                {/* submission_details একটি স্ট্রিং হওয়ায় এটিকে পার্স করতে হবে যদি এটি JSON হয় */}
+                                <p>
+                                    <strong>Details:</strong>{' '}
+                                    <span className="text-gray-300">
+                                        {/* এটি একটি সাধারণ স্ট্রিং হিসেবে ধরে নেওয়া হচ্ছে। 
+                                        যদি এটি JSON থাকে, তাহলে JSON.parse করে object.text বা object.image ব্যবহার করতে হবে।
+                                        যেমন: JSON.parse(selectedSubmission.submission_details).text */}
+                                        {selectedSubmission.submission_details}
+                                    </span>
+                                </p>
+                                {/* যদি submission_details এ image বা link/file থাকে, সেগুলোর জন্য আলাদাভাবে লজিক লিখতে হবে
+                                    যেহেতু আপনার ডেটা স্ট্রাকচারে submission_details একটি স্ট্রিং।
+                                    যদি submission_details এর মধ্যে image/link/file থাকে, তাহলে এটি JSON stringify করা থাকতে পারে,
+                                    সেক্ষেত্রে modal এ দেখানোর জন্য JSON.parse() করতে হবে।
+                                    এখানে আমি ধরে নিচ্ছি submission_details একটি সরল স্ট্রিং।
+                                    যদি এটি image/link/file সহ একটি object হয় যা stringify করা হয়েছে, তাহলে নিচের অংশটি পরিবর্তন করতে হবে:
+                                */}
+                                {/* {selectedSubmission.submission_details.image && ( ... )}  এগুলো কাজ করবে না যদি submission_details শুধু একটি string হয় */}
                             </div>
                         </motion.div>
                     </motion.div>
