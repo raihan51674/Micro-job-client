@@ -43,6 +43,7 @@ const TaskList = () => {
     };
 
     const handleViewDetails = (taskId, taskTitle) => {
+        console.log(taskId, taskTitle);
         toast(`Viewing details for: "${taskTitle}"`, {
             icon: '🔍',
             duration: 2000,
@@ -142,7 +143,7 @@ const TaskList = () => {
 
                                 <motion.button
                                     onClick={() =>
-                                        handleViewDetails(task._id, task?.task_title)
+                                        handleViewDetails(task._id, task?.taskTitle)
                                     }
                                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg text-base shadow-md transition-all duration-200 flex items-center justify-center gap-2 mt-auto"
                                     whileHover={{ scale: 1.02 }}

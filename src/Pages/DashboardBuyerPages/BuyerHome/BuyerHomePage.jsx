@@ -1,33 +1,56 @@
 import React, { useState, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Swal from 'sweetalert2'; // SweetAlert2 ইম্পোর্ট করুন
-import withReactContent from 'sweetalert2-react-content'; // React Content এর জন্য ইম্পোর্ট করুন
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { ClipboardList, CreditCard, Users, Eye, CheckCircle, XCircle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { AuthContext } from '../../../Provider/AuthProvider';
 import LoadingSpinner from '../../../Shared/LoadingSpinner';
 
-// SweetAlert2 React Content ইনিশিয়ালাইজ করুন
 const MySwal = withReactContent(Swal);
 
 const BuyerHomePage = () => {
-    const { user, loading } = useContext(AuthContext); // AuthContext থেকে লগইন করা ইউজারের ডেটা আনা হচ্ছে
-
-    const buyerStats = {
-        totalTasksAdded: 15,
-        pendingSubmissionsCount: 5,
-        totalPaymentPaid: 750.50,
-    };
-
-    const queryClient = useQueryClient(); // TanStack Query Client
+    const { user, loading } = useContext(AuthContext);
+    const queryClient = useQueryClient();
 
     const [showModal, setShowModal] = useState(false);
     const [selectedSubmission, setSelectedSubmission] = useState(null);
 
+    // --- Data Fetching for Buyer Statistics ---
+    const {
+        data: buyerStats = { totalTasksAdded: 0, pendingTaskSlots: 0, totalPaymentPaid: 0 },
+        isLoading: isLoadingStats,
+        error: statsError,
+    } = useQuery({
+        queryKey: ['buyerStats', user?.email],
+        queryFn: async () => {
+            if (!user?.email) {
+                return { totalTasksAdded: 0, pendingTaskSlots: 0, totalPaymentPaid: 0 };
+            }
+            const [tasksResponse, approvedSubmissionsResponse] = await Promise.all([
+                axios.get(`${import.meta.env.VITE_API_URL}/my-tasks/${user.email}`),
+                axios.get(`${import.meta.env.VITE_API_URL}/buyer-approved-submissions?buyer_email=${user.email}`) // এই এন্ডপয়েন্টটি আপনার সার্ভার কোডে যোগ করতে হবে
+            ]);
 
-    // 1. ডেটা ফেচিং: শুধুমাত্র 'pending' স্ট্যাটাসের সাবমিশনগুলো আনা হচ্ছে
-     const {
+            const tasks = tasksResponse.data;
+            const approvedSubmissions = approvedSubmissionsResponse.data;
+
+            const totalTasksAdded = tasks.length;
+            const pendingTaskSlots = tasks.reduce((sum, task) => sum + (task.requiredWorkers || 0), 0);
+            const totalPaymentPaid = approvedSubmissions.reduce((sum, sub) => sum + (sub.payable_amount || 0), 0);
+
+            return {
+                totalTasksAdded,
+                pendingTaskSlots,
+                totalPaymentPaid,
+            };
+        },
+        enabled: !!user?.email && !loading,
+    });
+
+    // --- Data Fetching for Pending Submissions ---
+    const {
         data: pendingSubmissions = [],
         isLoading: isLoadingSubmissions,
         error: submissionsError,
@@ -35,24 +58,19 @@ const BuyerHomePage = () => {
         queryKey: ['pendingSubmissionsForBuyer', user?.email],
         queryFn: async () => {
             if (!user?.email) {
-                // যদি user.email না থাকে, কোয়েরি চালাবে না
                 return [];
             }
             const url = `${import.meta.env.VITE_API_URL}/pending-submissions?buyer_email=${user?.email}`;
             const { data } = await axios.get(url);
-            console.log("Pending data", data);
+            console.log("Pending data (from server):", data);
             return data;
         },
-        enabled: !!user?.email && !loading, // user.email থাকলে এবং user ডেটা লোডিং শেষ হলে কোয়েরি রান করবে
-        // keepPreviousData: true, // যদি user ডেটা লোড হওয়ার সময় পুরনো ডেটা দেখাতে চান
+        enabled: !!user?.email && !loading,
     });
-    console.log("Pending Submissions Data (Client Side):", pendingSubmissions); // এখানে ডেটা চেক করুন
-    // ...বাকি কোড
 
-    // 2. অ্যাপ্রুভ সাবমিশন মিউটেশন
+    // --- Approve Submission Mutation ---
     const approveMutation = useMutation({
         mutationFn: async (submissionId) => {
-            // এই API এন্ডপয়েন্টটি আপনার ব্যাকএন্ডে তৈরি করতে হবে
             const { data } = await axios.patch(
                 `${import.meta.env.VITE_API_URL}/approve-submission/${submissionId}`
             );
@@ -62,29 +80,29 @@ const BuyerHomePage = () => {
             MySwal.fire({
                 icon: 'success',
                 title: 'Submission Approved!',
-                text: `Worker earned $${data.payable_amount}`,
+                text: `Worker earned ${data.payable_amount} coins.`, // সার্ভার থেকে payable_amount আসছে বলে ধরে নেওয়া হয়েছে
                 confirmButtonText: 'Great!'
             });
-            queryClient.invalidateQueries(['pendingSubmissionsForBuyer', user?.email]); // ডেটা রিফ্রেশ
-            queryClient.invalidateQueries(['mySubmissions', data.worker_email]); // ওয়ার্কারের সাবমিশন লিস্ট রিফ্রেশ (যদি ওয়ার্কার ভিউ খোলা থাকে)
-            queryClient.invalidateQueries(['users']); // ইউজারের কয়েন আপডেট হয়েছে তাই ইউজার লিস্ট রিফ্রেশ (যদি ইউজার লিস্ট ভিউ থাকে)
-            setShowModal(false); // মডাল বন্ধ করুন
+            queryClient.invalidateQueries(['pendingSubmissionsForBuyer', user?.email]);
+            queryClient.invalidateQueries(['buyerStats', user?.email]); // স্ট্যাটস আপডেট হবে
+            queryClient.invalidateQueries(['workerStats', data.worker_email]); // যদি worker stats কোথাও দেখানো হয়
+            queryClient.invalidateQueries(['userCoins', data.worker_email]); // ওয়ার্কারের কয়েন ব্যালেন্স রিফ্রেশ
+            setShowModal(false);
         },
         onError: (err) => {
             MySwal.fire({
                 icon: 'error',
                 title: 'Approval Failed!',
-                text: `Failed to approve submission: ${err.message}`,
+                text: `Failed to approve submission: ${err.response?.data?.message || err.message}`,
                 confirmButtonText: 'OK'
             });
             console.error("Approval error:", err);
         },
     });
 
-    // 3. রিজেক্ট সাবমিশন মিউটেশন
+    // --- Reject Submission Mutation ---
     const rejectMutation = useMutation({
         mutationFn: async (submissionId) => {
-            // এই API এন্ডপয়েন্টটি আপনার ব্যাকএন্ডে তৈরি করতে হবে
             const { data } = await axios.patch(
                 `${import.meta.env.VITE_API_URL}/reject-submission/${submissionId}`
             );
@@ -92,20 +110,21 @@ const BuyerHomePage = () => {
         },
         onSuccess: (data) => {
             MySwal.fire({
-                icon: 'error', // Reject এর জন্য error আইকন ব্যবহার করা হয়েছে
+                icon: 'error',
                 title: 'Submission Rejected!',
-                text: 'The submission has been rejected.',
+                text: 'The submission has been rejected. Task slot reopened.',
                 confirmButtonText: 'OK'
             });
-            queryClient.invalidateQueries(['pendingSubmissionsForBuyer', user?.email]); // ডেটা রিফ্রেশ
-            queryClient.invalidateQueries(['taskDetails', data.task_id]); // টাস্কের ডিটেইলস রিফ্রেশ (required_workers আপডেট হয়েছে)
-            setShowModal(false); // মডাল বন্ধ করুন
+            queryClient.invalidateQueries(['pendingSubmissionsForBuyer', user?.email]);
+            queryClient.invalidateQueries(['buyerStats', user?.email]); // স্ট্যাটস আপডেট হবে
+            queryClient.invalidateQueries(['taskDetails', data.task_id]); // টাস্কের ডিটেইলস রিফ্রেশ
+            setShowModal(false);
         },
         onError: (err) => {
             MySwal.fire({
                 icon: 'error',
                 title: 'Rejection Failed!',
-                text: `Failed to reject submission: ${err.message}`,
+                text: `Failed to reject submission: ${err.response?.data?.message || err.message}`,
                 confirmButtonText: 'OK'
             });
             console.error("Rejection error:", err);
@@ -120,7 +139,7 @@ const BuyerHomePage = () => {
     const handleApprove = (submissionId) => {
         MySwal.fire({
             title: 'Are you sure?',
-            text: "You want to APPROVE this submission?",
+            text: "You want to APPROVE this submission? Worker will receive coins.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
@@ -136,7 +155,7 @@ const BuyerHomePage = () => {
     const handleReject = (submissionId) => {
         MySwal.fire({
             title: 'Are you sure?',
-            text: "You want to REJECT this submission? This cannot be undone!",
+            text: "You want to REJECT this submission? Task slot will be reopened.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -149,14 +168,14 @@ const BuyerHomePage = () => {
         });
     };
 
-    if (isLoadingSubmissions) {
+    if (isLoadingSubmissions || isLoadingStats || loading) {
         return <LoadingSpinner />;
     }
 
-    if (submissionsError) {
+    if (submissionsError || statsError) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-900 text-red-400 text-lg">
-                <p>Error loading submissions: {submissionsError.message}. Please try again later.</p>
+                <p>Error loading data: {submissionsError?.message || statsError?.message}. Please try again later.</p>
             </div>
         );
     }
@@ -166,7 +185,9 @@ const BuyerHomePage = () => {
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white text-center mb-4 sm:mb-6 bg-gradient-to-r from-blue-300 to-purple-300 bg-clip-text text-transparent">
                 Buyer Dashboard Overview
             </h2>
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+
+            {/* Buyer Stats Section */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 {/* Total Tasks Added Card */}
                 <motion.div
                     whileHover={{ scale: 1.02 }}
@@ -182,7 +203,7 @@ const BuyerHomePage = () => {
                     <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1">{buyerStats.totalTasksAdded}</h3>
                 </motion.div>
 
-                {/* Pending Submissions Card */}
+                {/* Pending Task Slots Card */}
                 <motion.div
                     whileHover={{ scale: 1.02 }}
                     className="flex flex-col items-center p-4 sm:p-6 rounded-xl shadow-lg border border-white/10"
@@ -193,8 +214,8 @@ const BuyerHomePage = () => {
                     }}
                 >
                     <Users className="h-8 w-8 sm:h-10 sm:w-10 text-purple-400 mb-2 sm:mb-3" />
-                    <p className="text-xs sm:text-sm text-gray-300 text-center">Pending Submissions</p>
-                    <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1">{buyerStats.pendingSubmissionsCount}</h3>
+                    <p className="text-xs sm:text-sm text-gray-300 text-center">Pending Task Slots</p>
+                    <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1">{buyerStats.pendingTaskSlots}</h3>
                 </motion.div>
 
                 {/* Total Payment Paid Card */}
@@ -212,6 +233,7 @@ const BuyerHomePage = () => {
                     <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mt-1">${buyerStats.totalPaymentPaid.toFixed(2)}</h3>
                 </motion.div>
             </div>
+
             {/* Tasks To Review Section */}
             <h2 className="text-xl sm:text-2xl font-bold text-white mt-8 sm:mt-12 mb-4 sm:mb-6 bg-gradient-to-r from-teal-300 to-cyan-300 bg-clip-text text-transparent">
                 Tasks To Review
@@ -247,7 +269,7 @@ const BuyerHomePage = () => {
                             <tbody className="divide-y divide-white/5">
                                 {pendingSubmissions.map((submission) => (
                                     <motion.tr
-                                        key={submission._id} // MongoDB _id ব্যবহার করা হয়েছে
+                                        key={submission._id}
                                         whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
                                         className="transition-colors duration-200"
                                     >
@@ -255,10 +277,7 @@ const BuyerHomePage = () => {
                                             {submission.worker_name}
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
-                                            {/* এখানে task_title হিসেবে task_id ব্যবহার করা হয়েছে, কারণ আপনার সাবমিশন ডেটায় task_title সরাসরি নেই।
-                                            যদি task_title দরকার হয়, তাহলে submissionsCollection এ task_title সেভ করার ব্যবস্থা করতে হবে অথবা
-                                            আলাদাভাবে tasksCollection থেকে task_id দিয়ে ফেচ করতে হবে। */}
-                                            {submission.task_id} 
+                                            {submission.task_title} {/* task_title ব্যবহার করা হয়েছে */}
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-emerald-300 font-bold">
                                             ${submission.payable_amount?.toFixed(2)}
@@ -273,16 +292,16 @@ const BuyerHomePage = () => {
                                                     <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleApprove(submission._id)} // _id ব্যবহার করা হয়েছে
-                                                    disabled={approveMutation.isLoading || rejectMutation.isLoading} // লোডিং অবস্থায় ডিসেবল করা হয়েছে
+                                                    onClick={() => handleApprove(submission._id)}
+                                                    disabled={approveMutation.isLoading || rejectMutation.isLoading}
                                                     className="p-1 sm:p-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     title="Approve Submission"
                                                 >
                                                     <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleReject(submission._id)} // _id ব্যবহার করা হয়েছে
-                                                    disabled={approveMutation.isLoading || rejectMutation.isLoading} // লোডিং অবস্থায় ডিসেবল করা হয়েছে
+                                                    onClick={() => handleReject(submission._id)}
+                                                    disabled={approveMutation.isLoading || rejectMutation.isLoading}
                                                     className="p-1 sm:p-2 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     title="Reject Submission"
                                                 >
@@ -299,14 +318,14 @@ const BuyerHomePage = () => {
                         <div className="sm:hidden space-y-3 p-4">
                             {pendingSubmissions.map((submission) => (
                                 <motion.div
-                                    key={submission._id} // MongoDB _id ব্যবহার করা হয়েছে
+                                    key={submission._id}
                                     whileHover={{ scale: 1.01 }}
                                     className="p-4 rounded-lg border border-white/10 bg-black/20"
                                 >
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <h3 className="font-medium text-white">Task ID: {submission.task_id}</h3>
-                                            <p className="text-sm text-gray-300">{submission.worker_name}</p>
+                                            <h3 className="font-medium text-white">Task: {submission.task_title}</h3> {/* task_title ব্যবহার করা হয়েছে */}
+                                            <p className="text-sm text-gray-300">Worker: {submission.worker_name}</p>
                                         </div>
                                         <p className="text-emerald-300 font-bold">${submission.payable_amount?.toFixed(2)}</p>
                                     </div>
@@ -319,7 +338,7 @@ const BuyerHomePage = () => {
                                             <Eye className="h-4 w-4" />
                                         </button>
                                         <button
-                                            onClick={() => handleApprove(submission._id)} // _id ব্যবহার করা হয়েছে
+                                            onClick={() => handleApprove(submission._id)}
                                             disabled={approveMutation.isLoading || rejectMutation.isLoading}
                                             className="p-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                             title="Approve Submission"
@@ -327,7 +346,7 @@ const BuyerHomePage = () => {
                                             <CheckCircle className="h-4 w-4" />
                                         </button>
                                         <button
-                                            onClick={() => handleReject(submission._id)} // _id ব্যবহার করা হয়েছে
+                                            onClick={() => handleReject(submission._id)}
                                             disabled={approveMutation.isLoading || rejectMutation.isLoading}
                                             className="p-2 rounded-full bg-red-600 hover:bg-red-700 text-white transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                             title="Reject Submission"
@@ -372,29 +391,39 @@ const BuyerHomePage = () => {
                                 <XCircle className="h-6 w-6 sm:h-7 sm:w-7" />
                             </button>
                             <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4 border-b border-white/20 pb-2">
-                                Submission for "Task ID: {selectedSubmission.task_id}" {/* task_id ব্যবহার করা হয়েছে */}
+                                Submission for "{selectedSubmission.task_title}" {/* task_title ব্যবহার করা হয়েছে */}
                             </h3>
                             <div className="space-y-3 sm:space-y-4 text-sm sm:text-base">
                                 <p><strong>Worker:</strong> <span className="text-blue-300">{selectedSubmission.worker_name}</span></p>
                                 <p><strong>Payable Amount:</strong> <span className="text-emerald-300 font-bold">${selectedSubmission.payable_amount?.toFixed(2)}</span></p>
-                                {/* submission_details একটি স্ট্রিং হওয়ায় এটিকে পার্স করতে হবে যদি এটি JSON হয় */}
                                 <p>
                                     <strong>Details:</strong>{' '}
                                     <span className="text-gray-300">
-                                        {/* এটি একটি সাধারণ স্ট্রিং হিসেবে ধরে নেওয়া হচ্ছে। 
-                                        যদি এটি JSON থাকে, তাহলে JSON.parse করে object.text বা object.image ব্যবহার করতে হবে।
-                                        যেমন: JSON.parse(selectedSubmission.submission_details).text */}
-                                        {selectedSubmission.submission_details}
+                                        {/* যদি submission_details একটি JSON স্ট্রিং হয়, তাহলে পার্স করে ব্যবহার করুন */}
+                                        {typeof selectedSubmission.submission_details === 'string' && selectedSubmission.submission_details.startsWith('{') && selectedSubmission.submission_details.endsWith('}') ?
+                                            (() => {
+                                                try {
+                                                    const parsedDetails = JSON.parse(selectedSubmission.submission_details);
+                                                    return (
+                                                        <>
+                                                            <p>{parsedDetails.text}</p>
+                                                            {parsedDetails.image && (
+                                                                <img src={parsedDetails.image} alt="Submission Screenshot" className="mt-2 rounded-md max-h-48 object-contain w-full" />
+                                                            )}
+                                                            {parsedDetails.file && (
+                                                                <a href={parsedDetails.file} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">View Submitted File</a>
+                                                            )}
+                                                        </>
+                                                    );
+                                                } catch (e) {
+                                                    console.error("Failed to parse submission_details JSON:", e);
+                                                    return selectedSubmission.submission_details; // পার্স না হলে raw স্ট্রিং দেখাবে
+                                                }
+                                            })()
+                                            : selectedSubmission.submission_details // যদি সাধারণ স্ট্রিং হয়
+                                        }
                                     </span>
                                 </p>
-                                {/* যদি submission_details এ image বা link/file থাকে, সেগুলোর জন্য আলাদাভাবে লজিক লিখতে হবে
-                                    যেহেতু আপনার ডেটা স্ট্রাকচারে submission_details একটি স্ট্রিং।
-                                    যদি submission_details এর মধ্যে image/link/file থাকে, তাহলে এটি JSON stringify করা থাকতে পারে,
-                                    সেক্ষেত্রে modal এ দেখানোর জন্য JSON.parse() করতে হবে।
-                                    এখানে আমি ধরে নিচ্ছি submission_details একটি সরল স্ট্রিং।
-                                    যদি এটি image/link/file সহ একটি object হয় যা stringify করা হয়েছে, তাহলে নিচের অংশটি পরিবর্তন করতে হবে:
-                                */}
-                                {/* {selectedSubmission.submission_details.image && ( ... )}  এগুলো কাজ করবে না যদি submission_details শুধু একটি string হয় */}
                             </div>
                         </motion.div>
                     </motion.div>

@@ -78,7 +78,7 @@ const TaskDetails = () => {
 
         const submissionData = {
             task_id: task._id,
-            task_title: task.task_title,
+            task_title: task.taskTitle,
             payable_amount: task?.payableAmount,
             worker_email: user?.email,
             submission_details: submissionDetails,
