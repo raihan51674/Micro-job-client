@@ -1,58 +1,140 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, ShoppingCart, DollarSign, Wallet, CheckCircle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, ShoppingCart, DollarSign, Wallet, CheckCircle, Clock, ChevronDown, ChevronUp, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
-// Static Data
-const dashboardMetrics = {
-  totalWorkers: 1250,
-  totalBuyers: 3400,
-  totalAvailableCoins: 500000,
-  totalPayments: 8750,
-};
-
-const initialWithdrawRequests = [
-  {
-    id: 'WDR1001',
-    userId: 'USER001',
-    username: 'Alice Smith',
-    amount: 50.00,
-    requestDate: '2025-07-08 10:00',
-    status: 'Pending',
-    method: 'PayPal',
-  },
-  {
-    id: 'WDR1002',
-    userId: 'USER005',
-    username: 'Bob Johnson',
-    amount: 120.00,
-    requestDate: '2025-07-07 14:15',
-    status: 'Pending',
-    method: 'Bank Transfer',
-  },
-  {
-    id: 'WDR1003',
-    userId: 'USER010',
-    username: 'Charlie Brown',
-    amount: 30.00,
-    requestDate: '2025-07-06 09:30',
-    status: 'Pending',
-    method: 'Stripe Payout',
-  },
-  {
-    id: 'WDR1004',
-    userId: 'USER015',
-    username: 'Diana Prince',
-    amount: 80.00,
-    requestDate: '2025-07-05 18:00',
-    status: 'Approved',
-    method: 'PayPal',
-  },
-];
+const API_BASE_URL = 'http://localhost:3000';
 
 const AdminHome = () => {
-  const [withdrawRequests, setWithdrawRequests] = useState(initialWithdrawRequests);
+  // ... (keep all your existing state and effect hooks)
+   const [dashboardMetrics, setDashboardMetrics] = useState({
+    totalWorkers: 0,
+    totalBuyers: 0,
+    totalAvailableCoins: 0,
+    totalPayments: 0,
+    totalPendingWithdrawals: 0,
+    totalPendingSubmissions: 0,
+  });
+  const [withdrawRequests, setWithdrawRequests] = useState([]);
   const [expandedRequest, setExpandedRequest] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchDashboardData();
+    fetchWithdrawalRequests();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [
+        usersRes,
+        coinRes,
+        purchasedCoinRes,
+        withdrawalCountRes,
+        submissionCountRes
+      ] = await Promise.all([
+        axios.get(`${API_BASE_URL}/users-management`),
+        axios.get(`${API_BASE_URL}/admin/total-available-coins`),
+        axios.get(`${API_BASE_URL}/transactions`),
+        axios.get(`${API_BASE_URL}/admin/total-pending-withdrawals`),
+        axios.get(`${API_BASE_URL}/admin/total-pending-submissions`),
+      ]);
+
+      const users = usersRes.data;
+      const totalWorkers = users.filter(user => user.role === 'worker').length;
+      const totalBuyers = users.filter(user => user.role === 'buyer').length;
+      const totalAvailableCoins = coinRes.data.totalCoins;
+      const totalPayments = purchasedCoinRes.data.length;
+
+      setDashboardMetrics({
+        totalWorkers,
+        totalBuyers,
+        totalAvailableCoins,
+        totalPayments,
+        totalPendingWithdrawals: withdrawalCountRes.data.count,
+        totalPendingSubmissions: submissionCountRes.data.count,
+      });
+
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+      setError("Failed to load dashboard metrics.");
+      toast.error("Failed to load dashboard metrics.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchWithdrawalRequests = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/admin/withdrawal-requests`);
+      setWithdrawRequests(response.data.map(req => ({
+        id: req._id,
+        userId: req.worker_id,
+        username: req.worker_name,
+        worker_email: req.worker_email,
+        amount: req.withdrawal_amount,
+        withdrawal_coin: req.withdrawal_coin,
+        requestDate: new Date(req.withdraw_date).toLocaleString(),
+        status: req.status,
+        method: req.payment_system,
+        accountNumber: req.account_number,
+      })));
+    } catch (err) {
+      console.error("Error fetching withdrawal requests:", err);
+      setError("Failed to load withdrawal requests.");
+      toast.error("Failed to load withdrawal requests.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePaymentSuccess = async (id) => {
+    try {
+      await axios.patch(`${API_BASE_URL}/admin/approve-withdrawal/${id}`);
+      setWithdrawRequests((prevRequests) =>
+        prevRequests.map((request) =>
+          request.id === id ? { ...request, status: 'Approved' } : request
+        )
+      );
+      toast.success(`Withdrawal ${id} approved successfully!`, {
+        duration: 3000,
+        style: {
+          background: '#16a34a',
+          color: '#fff',
+        },
+      });
+      fetchDashboardData();
+    } catch (err) {
+      console.error("Error approving withdrawal:", err);
+      toast.error(`Failed to approve withdrawal ${id}.`);
+    }
+  };
+
+  const handlePaymentReject = async (id) => {
+    try {
+      await axios.patch(`${API_BASE_URL}/admin/reject-withdrawal/${id}`);
+      setWithdrawRequests((prevRequests) =>
+        prevRequests.map((request) =>
+          request.id === id ? { ...request, status: 'Rejected' } : request
+        )
+      );
+      toast.success(`Withdrawal ${id} rejected and coins refunded!`, {
+        duration: 3000,
+        style: {
+          background: '#dc2626',
+          color: '#fff',
+        },
+      });
+      fetchDashboardData();
+    } catch (err) {
+      console.error("Error rejecting withdrawal:", err);
+      toast.error(`Failed to reject withdrawal ${id}.`);
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -70,24 +152,9 @@ const AdminHome = () => {
     visible: { opacity: 1, y: 0 },
   };
 
-  const handlePaymentSuccess = (id) => {
-    setWithdrawRequests((prevRequests) =>
-      prevRequests.map((request) =>
-        request.id === id ? { ...request, status: 'Approved' } : request
-      )
-    );
-    toast.success(`Withdrawal ${id} approved successfully!`, {
-      duration: 3000,
-      style: {
-        background: '#16a34a',
-        color: '#fff',
-      },
-    });
-  };
-
   const renderStatusBadge = (status) => {
     switch (status) {
-      case 'Pending':
+      case 'pending':
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-900/30 text-yellow-300 border border-yellow-700/50">
             <Clock className="w-3 h-3 mr-1" /> Pending
@@ -99,6 +166,12 @@ const AdminHome = () => {
             <CheckCircle className="w-3 h-3 mr-1" /> Approved
           </span>
         );
+      case 'Rejected':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-900/30 text-red-300 border border-red-700/50">
+            <XCircle className="w-3 h-3 mr-1" /> Rejected
+          </span>
+        );
       default:
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-700/30 text-gray-300 border border-gray-600/50">
@@ -108,49 +181,102 @@ const AdminHome = () => {
     }
   };
 
-  const pendingRequests = withdrawRequests.filter(req => req.status === 'Pending');
+  const pendingRequests = withdrawRequests.filter(req => req.status === 'pending');
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+        <p className="text-xl">Loading dashboard data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-red-400">
+        <p className="text-xl">{error}</p>
+      </div>
+    );
+  }
+
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 lg:p-8 flex items-start justify-center font-sans text-white">
+    <div className="min-h-screen p-2 sm:p-3 md:p-4 lg:p-5 xl:p-6 flex items-start justify-center font-sans text-white bg-gray-900">
       <motion.div
-        className="w-full max-w-7xl mx-auto bg-gray-800/30 backdrop-blur-xl rounded-xl lg:rounded-3xl shadow-xl lg:shadow-2xl border border-gray-700/60 p-4 sm:p-6 lg:p-8 overflow-hidden"
+        className="w-full max-w-[95vw] xl:max-w-7xl mx-auto bg-gray-800/30 backdrop-blur-xl rounded-lg md:rounded-xl lg:rounded-2xl shadow-lg border border-gray-700/60 p-3 sm:p-4 md:p-5 lg:p-6 overflow-hidden"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         {/* Header */}
-        <motion.div className="text-center mb-6 sm:mb-8 lg:mb-10" variants={itemVariants}>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent mb-2 sm:mb-3 lg:mb-4">
+        <motion.div className="text-center mb-4 sm:mb-5 md:mb-6" variants={itemVariants}>
+          <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-[2rem] font-bold bg-gradient-to-r from-orange-400 via-red-500 to-pink-500 bg-clip-text text-transparent mb-1 sm:mb-2">
             Admin Dashboard
           </h1>
-          <p className="text-gray-300 text-sm sm:text-base max-w-md sm:max-w-lg mx-auto">
-            Overview of system metrics and pending withdrawal requests
+          <p className="text-gray-300 text-xs sm:text-sm md:text-[0.9rem] max-w-md mx-auto">
+            Overview of system metrics and pending requests
           </p>
         </motion.div>
 
         {/* Dashboard Metrics */}
-        <motion.div className="mb-8 sm:mb-10 lg:mb-12" variants={itemVariants}>
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-200 mb-4 sm:mb-6 text-center">System Metrics</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
-            {Object.entries(dashboardMetrics).map(([key, value]) => (
+        <motion.div className="mb-5 sm:mb-6 md:mb-8" variants={itemVariants}>
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-200 mb-3 sm:mb-4 text-center">System Metrics</h2>
+          <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+            {/* Metric Cards - Adjusted for better responsive behavior */}
+            {[
+              {
+                title: "Total Workers",
+                value: dashboardMetrics.totalWorkers,
+                icon: Users,
+                color: "blue"
+              },
+              {
+                title: "Total Buyers",
+                value: dashboardMetrics.totalBuyers,
+                icon: ShoppingCart,
+                color: "purple"
+              },
+              {
+                title: "Total Coins",
+                value: dashboardMetrics.totalAvailableCoins,
+                icon: Wallet,
+                color: "yellow",
+                suffix: "Coins"
+              },
+              {
+                title: "Total Payments",
+                value: dashboardMetrics.totalPayments,
+                icon: DollarSign,
+                color: "green"
+              },
+              {
+                title: "Pending Withdrawals",
+                value: dashboardMetrics.totalPendingWithdrawals,
+                icon: Clock,
+                color: "red"
+              },
+              {
+                title: "Pending Submissions",
+                value: dashboardMetrics.totalPendingSubmissions,
+                icon: CheckCircle,
+                color: "orange"
+              }
+            ].map((metric, index) => (
               <motion.div
-                key={key}
-                className="bg-gray-700/40 p-4 sm:p-5 lg:p-6 rounded-lg sm:rounded-xl shadow border border-gray-600/70 flex flex-col items-center text-center group"
-                whileHover={{ scale: 1.03, boxShadow: "0 0 15px rgba(59, 130, 246, 0.3)" }}
+                key={index}
+                className={`bg-gray-700/40 p-3 sm:p-3 md:p-4 rounded-lg shadow border border-gray-600/70 flex flex-col items-center text-center group`}
+                whileHover={{ scale: 1.03 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                 variants={itemVariants}
               >
-                <div className="p-2 sm:p-3 rounded-full bg-blue-600/30 text-blue-300 mb-3 group-hover:bg-blue-500/50 transition-colors">
-                  {key === 'totalWorkers' && <Users className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />}
-                  {key === 'totalBuyers' && <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />}
-                  {key === 'totalAvailableCoins' && <Wallet className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />}
-                  {key === 'totalPayments' && <DollarSign className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />}
+                <div className={`p-2 rounded-full bg-${metric.color}-600/30 text-${metric.color}-300 mb-2 group-hover:bg-${metric.color}-500/50 transition-colors`}>
+                  <metric.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
-                <p className="text-gray-300 text-xs sm:text-sm uppercase tracking-wide">
-                  {key.replace(/([A-Z])/g, ' $1').trim()}
+                <p className="text-gray-300 text-[0.65rem] xs:text-xs sm:text-[0.75rem] md:text-sm uppercase tracking-wide">
+                  {metric.title}
                 </p>
-                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mt-1 sm:mt-2">
-                  {key === 'totalAvailableCoins' ? `${value.toLocaleString()} Coins` : value.toLocaleString()}
+                <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mt-1">
+                  {metric.value.toLocaleString()}{metric.suffix ? ` ${metric.suffix}` : ''}
                 </h3>
               </motion.div>
             ))}
@@ -159,66 +285,58 @@ const AdminHome = () => {
 
         {/* Withdrawal Requests */}
         <motion.div variants={itemVariants}>
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-200 mb-4 sm:mb-6 text-center">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-200 mb-3 sm:mb-4 text-center">
             Pending Withdrawal Requests ({pendingRequests.length})
           </h2>
-          
+
           {/* Mobile View - Cards */}
-          <div className="lg:hidden space-y-3">
+          <div className="block md:hidden space-y-3">
             {pendingRequests.length === 0 ? (
-              <div className="p-6 text-center text-gray-400 bg-gray-800/50 rounded-lg">
-                No pending withdrawal requests. Great job!
+              <div className="p-4 sm:p-5 text-center text-gray-400 bg-gray-800/50 rounded-lg text-sm">
+                No pending withdrawal requests.
               </div>
             ) : (
               pendingRequests.map((request) => (
                 <motion.div
                   key={request.id}
-                  className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4"
+                  className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-4"
                   variants={itemVariants}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <div className="text-xs text-gray-400">Request ID</div>
-                      <div className="text-blue-300 font-medium text-sm">{request.id}</div>
+                      <div className="text-xs text-gray-400">User</div>
+                      <div className="text-blue-300 font-medium text-sm truncate max-w-[120px]">
+                        {request.username}
+                      </div>
                     </div>
                     <div className="text-right">
                       <div className="text-xs text-gray-400">Amount</div>
-                      <div className="text-green-400 font-bold">${request.amount.toFixed(2)}</div>
+                      <div className="text-green-400 font-bold text-sm">${request.amount.toFixed(2)}</div>
                     </div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 mt-3">
+
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-2 mt-2 text-xs sm:text-sm">
                     <div>
-                      <div className="text-xs text-gray-400">User</div>
-                      <div className="text-gray-300 text-sm">
-                        {request.username} ({request.userId})
-                      </div>
+                      <div className="text-gray-400">Coins</div>
+                      <div className="text-gray-300">{request.withdrawal_coin}</div>
                     </div>
                     <div>
-                      <div className="text-xs text-gray-400">Method</div>
-                      <div className="text-gray-300 text-sm">{request.method}</div>
+                      <div className="text-gray-400">Method</div>
+                      <div className="text-gray-300 truncate">{request.method}</div>
                     </div>
                     <div>
-                      <div className="text-xs text-gray-400">Date</div>
-                      <div className="text-gray-300 text-sm">
-                        {request.requestDate.split(' ')[0]}
-                      </div>
+                      <div className="text-gray-400">Account</div>
+                      <div className="text-gray-300 truncate">{request.accountNumber}</div>
                     </div>
                     <div>
-                      <div className="text-xs text-gray-400">Status</div>
+                      <div className="text-gray-400">Status</div>
                       <div className="mt-1">{renderStatusBadge(request.status)}</div>
                     </div>
                   </div>
 
-                  <div className="mt-4">
+                  <div className="mt-3">
                     <button
-                      onClick={() => {
-                        if (expandedRequest === request.id) {
-                          setExpandedRequest(null);
-                        } else {
-                          setExpandedRequest(request.id);
-                        }
-                      }}
+                      onClick={() => setExpandedRequest(expandedRequest === request.id ? null : request.id)}
                       className="text-xs text-blue-400 flex items-center"
                     >
                       {expandedRequest === request.id ? (
@@ -233,17 +351,27 @@ const AdminHome = () => {
                     </button>
 
                     {expandedRequest === request.id && (
-                      <div className="mt-3 pt-3 border-t border-gray-700/50">
-                        <div className="flex justify-between text-xs mb-2">
-                          <span className="text-gray-400">Full Date:</span>
-                          <span className="text-gray-300">{request.requestDate}</span>
+                      <div className="mt-2 pt-2 border-t border-gray-700/50 flex flex-col gap-2">
+                        <div className="text-xs text-gray-300">
+                          <span className="text-gray-400">Email:</span> {request.worker_email}
                         </div>
-                        <button
-                          onClick={() => handlePaymentSuccess(request.id)}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded text-sm shadow transition-all duration-200 flex items-center justify-center gap-1 mt-2"
-                        >
-                          <CheckCircle className="w-4 h-4" /> Approve Payment
-                        </button>
+                        <div className="text-xs text-gray-300">
+                          <span className="text-gray-400">Date:</span> {request.requestDate}
+                        </div>
+                        <div className="flex gap-2 mt-1">
+                          <button
+                            onClick={() => handlePaymentSuccess(request.id)}
+                            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-1.5 px-2 rounded text-xs shadow flex items-center justify-center gap-1"
+                          >
+                            <CheckCircle className="w-3 h-3" /> Approve
+                          </button>
+                          <button
+                            onClick={() => handlePaymentReject(request.id)}
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-1.5 px-2 rounded text-xs shadow flex items-center justify-center gap-1"
+                          >
+                            <XCircle className="w-3 h-3" /> Reject
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -252,84 +380,107 @@ const AdminHome = () => {
             )}
           </div>
 
-          {/* Desktop View - Table */}
-          <div className="hidden lg:block overflow-x-auto rounded-lg border border-gray-700/50 shadow">
+          {/* Tablet/Desktop View - Table */}
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-700/50 shadow">
             {pendingRequests.length === 0 ? (
-              <div className="p-8 text-center text-gray-400 text-lg bg-gray-800/70">
-                No pending withdrawal requests. Great job!
+              <div className="p-6 text-center text-gray-400 text-sm md:text-base bg-gray-800/70">
+                No pending withdrawal requests.
               </div>
             ) : (
-              <table className="min-w-full divide-y divide-gray-700/50">
-                <thead className="bg-gray-700/50">
-                  <tr>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Request ID
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      User
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Method
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Request Date
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-gray-800/70 divide-y divide-gray-700/50">
-                  {pendingRequests.map((request) => (
-                    <motion.tr
-                      key={request.id}
-                      className="hover:bg-gray-700/60 transition-colors duration-200"
-                      variants={itemVariants}
-                    >
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-blue-300">
-                        {request.id}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
-                        {request.username} ({request.userId})
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-green-400 font-bold">
-                        ${request.amount.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
-                        {request.method}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
-                        {request.requestDate}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        {renderStatusBadge(request.status)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        <motion.button
-                          onClick={() => handlePaymentSuccess(request.id)}
-                          className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded text-sm shadow transition-all duration-200 flex items-center justify-center gap-1"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <CheckCircle className="w-4 h-4" /> Approve
-                        </motion.button>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="min-w-[700px] lg:min-w-full">
+                <table className="w-full divide-y divide-gray-700/50">
+                  <thead className="bg-gray-700/50">
+                    <tr>
+                      <th scope="col" className="px-3 py-2 md:px-4 md:py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Request ID
+                      </th>
+                      <th scope="col" className="px-3 py-2 md:px-4 md:py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        User
+                      </th>
+                      <th scope="col" className="px-3 py-2 md:px-4 md:py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Amount
+                      </th>
+                      <th scope="col" className="px-3 py-2 md:px-4 md:py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Coins
+                      </th>
+                      <th scope="col" className="px-3 py-2 md:px-4 md:py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Method
+                      </th>
+                      <th scope="col" className="px-3 py-2 md:px-4 md:py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Account
+                      </th>
+                      <th scope="col" className="px-3 py-2 md:px-4 md:py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Status
+                      </th>
+                      <th scope="col" className="px-3 py-2 md:px-4 md:py-3 text-left text-xs md:text-sm font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-gray-800/70 divide-y divide-gray-700/50">
+                    {pendingRequests.map((request) => (
+                      <motion.tr
+                        key={request.id}
+                        className="hover:bg-gray-700/60 transition-colors duration-200"
+                        variants={itemVariants}
+                      >
+                        <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap text-xs md:text-sm font-medium text-blue-300">
+                          {request.id.substring(0, 8)}...
+                        </td>
+                        <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap">
+                          <div className="text-xs md:text-sm text-gray-300 font-medium">{request.username}</div>
+                          <div className="text-[0.65rem] md:text-xs text-gray-400 truncate max-w-[120px] md:max-w-[180px]">
+                            {request.worker_email}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap text-xs md:text-sm text-green-400 font-bold">
+                          ${request.amount.toFixed(2)}
+                        </td>
+                        <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap text-xs md:text-sm text-gray-300">
+                          {request.withdrawal_coin}
+                        </td>
+                        <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap text-xs md:text-sm text-gray-300">
+                          {request.method}
+                        </td>
+                        <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap text-xs md:text-sm text-gray-300">
+                          {request.accountNumber}
+                        </td>
+                        <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap">
+                          {renderStatusBadge(request.status)}
+                        </td>
+                        <td className="px-3 py-2 md:px-4 md:py-3 whitespace-nowrap">
+                          <div className="flex gap-1 md:gap-2">
+                            <motion.button
+                              onClick={() => handlePaymentSuccess(request.id)}
+                              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-1 md:py-2 px-2 md:px-3 rounded text-xs md:text-sm shadow transition-all duration-200 flex items-center justify-center gap-1"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <CheckCircle className="w-3 h-3 md:w-4 md:h-4" />
+                              <span className="hidden sm:inline">Approve</span>
+                            </motion.button>
+                            <motion.button
+                              onClick={() => handlePaymentReject(request.id)}
+                              className="bg-red-600 hover:bg-red-700 text-white font-semibold py-1 md:py-2 px-2 md:px-3 rounded text-xs md:text-sm shadow transition-all duration-200 flex items-center justify-center gap-1"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <XCircle className="w-3 h-3 md:w-4 md:h-4" />
+                              <span className="hidden sm:inline">Reject</span>
+                            </motion.button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </motion.div>
 
         {/* Footer */}
-        <motion.div className="mt-8 lg:mt-12 text-center text-gray-500 text-xs sm:text-sm" variants={itemVariants}>
+        <motion.div className="mt-5 sm:mt-6 md:mt-8 text-center text-gray-500 text-xs sm:text-sm" variants={itemVariants}>
           <p className="mb-1">Admin panel for CoinFlow platform. All actions are logged for auditing.</p>
           <p>&copy; {new Date().getFullYear()} CoinFlow. All rights reserved.</p>
         </motion.div>
