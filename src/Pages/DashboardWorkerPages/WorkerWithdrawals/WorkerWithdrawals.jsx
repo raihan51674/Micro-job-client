@@ -1,34 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { DollarSign, Wallet, Banknote, CreditCard } from 'lucide-react';
-import toast from 'react-hot-toast'; // Ensure react-hot-toast is installed and <Toaster/> is in your app root
+import toast from 'react-hot-toast';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { AuthContext } from '../../../Provider/AuthProvider';
 
 // --- Constants ---
 const COINS_PER_DOLLAR = 20;
 const MIN_WITHDRAW_COINS = 200; // Equivalent to $10
-
-// --- Static Data for a specific worker ---
-// In a real application, this would come from an API based on the logged-in worker's ID.
-const workerCurrentBalance = {
-    currentCoins: 350, // Example: user has 350 coins
-};
 
 // --- Payment Systems ---
 const paymentSystems = ['Bkash', 'Rocket', 'Nagad', 'PayPal', 'Bank Transfer'];
 
 // --- WorkerWithdrawals Component ---
 const WorkerWithdrawals = () => {
+    const queryClient = useQueryClient();
+
+    
+
+    const {user} = useContext(AuthContext)
+
+    const email = user?.email;
+    const name = user?.displayName;
+
+
     const [coinsToWithdraw, setCoinsToWithdraw] = useState('');
     const [withdrawAmountDollars, setWithdrawAmountDollars] = useState(0);
     const [selectedPaymentSystem, setSelectedPaymentSystem] = useState('');
     const [accountNumber, setAccountNumber] = useState('');
 
-    const hasEnoughCoins = workerCurrentBalance.currentCoins >= MIN_WITHDRAW_COINS;
-    const canWithdrawInput = coinsToWithdraw >= MIN_WITHDRAW_COINS && coinsToWithdraw <= workerCurrentBalance.currentCoins;
+    // --- Fetch Worker Balance using TanStack Query ---
+    const { data: workerBalance = { currentCoins: 0 }, isLoading, isError } = useQuery({
+        queryKey: ['workerBalance', email], // Query key includes email for uniqueness
+        queryFn: async () => {
+            if (!email) {
+                // If no logged-in user email, prevent query from running
+                throw new Error("Worker email not available for fetching balance.");
+            }
+            
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/worker/balance?email=${email}`);
+            return res.data;
+        },
+        enabled: !!email, // Only run if worker email is available
+        staleTime: 5 * 60 * 1000,
+        cacheTime: 10 * 60 * 1000,
+    });
+
+    const currentCoins = workerBalance.currentCoins;
+    const hasEnoughCoins = currentCoins >= MIN_WITHDRAW_COINS;
+    const canWithdrawInput = Number(coinsToWithdraw) >= MIN_WITHDRAW_COINS && Number(coinsToWithdraw) <= currentCoins;
 
     useEffect(() => {
-        if (coinsToWithdraw && coinsToWithdraw > 0) {
-            setWithdrawAmountDollars(coinsToWithdraw / COINS_PER_DOLLAR);
+        if (coinsToWithdraw && Number(coinsToWithdraw) > 0) {
+            setWithdrawAmountDollars(Number(coinsToWithdraw) / COINS_PER_DOLLAR);
         } else {
             setWithdrawAmountDollars(0);
         }
@@ -36,22 +61,51 @@ const WorkerWithdrawals = () => {
 
     const handleCoinsChange = (e) => {
         const value = e.target.value;
-        // Allow empty string or numbers
         if (value === '' || /^\d+$/.test(value)) {
             const numValue = Number(value);
-            // Ensure it's not negative
-            if (numValue >= 0) {
+            if (numValue >= 0 && numValue <= currentCoins) {
                 setCoinsToWithdraw(value);
             } else if (value === '') {
-                setCoinsToWithdraw(''); // Allow clearing the input
+                setCoinsToWithdraw('');
             }
         }
     };
 
+    // --- Withdraw Mutation using TanStack Query ---
+    const withdrawMutation = useMutation({
+        mutationFn: async (withdrawalData) => {
+            // JWT ছাড়া, সরাসরি ডেটা পাঠান
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/worker/withdraw`, withdrawalData);
+            return res.data;
+        },
+        onSuccess: (data) => {
+            toast.success('Withdrawal request submitted successfully!', {
+                duration: 5000,
+                style: { background: '#16a34a', color: '#fff' },
+            });
+            queryClient.invalidateQueries(['workerBalance']);
+            setCoinsToWithdraw('');
+            setSelectedPaymentSystem('');
+            setAccountNumber('');
+            setWithdrawAmountDollars(0);
+        },
+        onError: (error) => {
+            console.error("Withdrawal error:", error);
+            const errorMessage = error.response?.data?.message || 'Failed to submit withdrawal request.';
+            toast.error(errorMessage, {
+                duration: 5000,
+                style: { background: '#dc3545', color: '#fff' },
+            });
+        },
+    });
+
+
     const handleWithdrawalSubmit = (e) => {
         e.preventDefault();
 
-        if (!coinsToWithdraw || Number(coinsToWithdraw) < MIN_WITHDRAW_COINS) {
+        const withdrawalCoins = Number(coinsToWithdraw);
+
+        if (!withdrawalCoins || withdrawalCoins < MIN_WITHDRAW_COINS) {
             toast.error(`Minimum withdrawal is ${MIN_WITHDRAW_COINS} coins ($${MIN_WITHDRAW_COINS / COINS_PER_DOLLAR}).`, {
                 duration: 4000,
                 style: { background: '#dc3545', color: '#fff' }
@@ -59,7 +113,7 @@ const WorkerWithdrawals = () => {
             return;
         }
 
-        if (Number(coinsToWithdraw) > workerCurrentBalance.currentCoins) {
+        if (withdrawalCoins > currentCoins) {
             toast.error('You cannot withdraw more coins than you have.', {
                 duration: 4000,
                 style: { background: '#dc3545', color: '#fff' }
@@ -83,28 +137,20 @@ const WorkerWithdrawals = () => {
             return;
         }
 
-        // Simulate API call to process withdrawal
-        toast.success(
-            `Withdrawal request for ${coinsToWithdraw} coins ($${withdrawAmountDollars.toFixed(2)}) via ${selectedPaymentSystem} to ${accountNumber} submitted successfully!`,
-            {
-                duration: 5000,
-                style: {
-                    background: '#16a34a', // Tailwind green-600
-                    color: '#fff',
-                },
-            }
-        );
+        
+        const dataToSubmit = {
+            worker_email: email,
+            worker_name: name,  
+            withdrawal_coin: withdrawalCoins,
+            withdrawal_amount: withdrawAmountDollars,
+            payment_system: selectedPaymentSystem,
+            accountNumber: accountNumber,
+        };
 
-        // Reset form fields after successful submission (in a real app, you'd update currentCoins too)
-        setCoinsToWithdraw('');
-        setSelectedPaymentSystem('');
-        setAccountNumber('');
-        setWithdrawAmountDollars(0);
-        // For static, we don't change workerCurrentBalance.currentCoins
-        // In a real app: update workerCurrentBalance.currentCoins -= Number(coinsToWithdraw);
+        withdrawMutation.mutate(dataToSubmit); // Trigger the mutation
     };
 
-    // Framer Motion variants
+    
     const containerVariants = {
         hidden: { opacity: 0, y: 20 },
         visible: {
@@ -121,6 +167,22 @@ const WorkerWithdrawals = () => {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0 },
     };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen p-4 md:p-8 flex items-center justify-center font-sans text-white">
+                <div className="text-gray-400 text-lg">Loading balance...</div>
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="min-h-screen p-4 md:p-8 flex items-center justify-center font-sans text-white">
+                <div className="text-red-400 text-lg">Error loading balance. Please try again.</div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen p-4 md:p-8 flex items-start justify-center font-sans text-white">
@@ -146,13 +208,13 @@ const WorkerWithdrawals = () => {
                     <div className="flex items-center justify-center gap-4 mb-3">
                         <Wallet className="w-8 h-8 text-yellow-400" />
                         <span className="text-4xl font-extrabold text-white">
-                            {workerCurrentBalance.currentCoins.toLocaleString()} Coins
+                            {currentCoins.toLocaleString()} Coins
                         </span>
                     </div>
                     <div className="flex items-center justify-center gap-2">
                         <DollarSign className="w-6 h-6 text-green-400" />
                         <span className="text-2xl font-semibold text-green-300">
-                            (Equivalent to ${((workerCurrentBalance.currentCoins / COINS_PER_DOLLAR)).toFixed(2)})
+                            (Equivalent to ${((currentCoins / COINS_PER_DOLLAR)).toFixed(2)})
                         </span>
                     </div>
                     <p className="text-sm text-gray-400 mt-3">
@@ -179,7 +241,7 @@ const WorkerWithdrawals = () => {
                                 Coins To Withdraw (Min {MIN_WITHDRAW_COINS})
                             </label>
                             <input
-                                type="text" // Use text to allow empty string for controlled component, validate as number
+                                type="text"
                                 id="coinsToWithdraw"
                                 value={coinsToWithdraw}
                                 onChange={handleCoinsChange}
@@ -187,9 +249,9 @@ const WorkerWithdrawals = () => {
                                 placeholder={`Enter coins (e.g., ${MIN_WITHDRAW_COINS})`}
                                 disabled={!hasEnoughCoins}
                             />
-                            {coinsToWithdraw > workerCurrentBalance.currentCoins && (
+                            {Number(coinsToWithdraw) > currentCoins && (
                                 <p className="mt-2 text-red-400 text-sm">
-                                    You only have {workerCurrentBalance.currentCoins} coins.
+                                    You only have {currentCoins} coins.
                                 </p>
                             )}
                         </div>
@@ -268,9 +330,9 @@ const WorkerWithdrawals = () => {
                                 }`}
                                 whileHover={canWithdrawInput && selectedPaymentSystem && accountNumber.trim() ? { scale: 1.02 } : {}}
                                 whileTap={canWithdrawInput && selectedPaymentSystem && accountNumber.trim() ? { scale: 0.98 } : {}}
-                                disabled={!canWithdrawInput || !selectedPaymentSystem || !accountNumber.trim()}
+                                disabled={!canWithdrawInput || !selectedPaymentSystem || !accountNumber.trim() || withdrawMutation.isLoading}
                             >
-                                <Banknote className="w-5 h-5" /> Withdraw Now
+                                {withdrawMutation.isLoading ? 'Processing...' : <><Banknote className="w-5 h-5" /> Withdraw Now</>}
                             </motion.button>
                         ) : null}
                     </form>
