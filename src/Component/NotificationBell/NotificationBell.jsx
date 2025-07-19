@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import axios from 'axios';
 
 import { FaBell } from 'react-icons/fa';
-import { AuthContext } from '../../Provider/AuthProvider';
 import NotificationItem from '../NotificationItem/NotificationItem';
+import { AuthContext } from '../../Provider/AuthProvider';
 
 const NotificationBell = () => {
-    const { user, logoutUser } = useContext(AuthContext); // logoutUser ফাংশনটি ধরুন
+    const { user, logOut } = useContext(AuthContext);
     const [notifications, setNotifications] = useState([]);
     const [showPopup, setShowPopup] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -36,7 +36,7 @@ const NotificationBell = () => {
                 console.error('Failed to fetch notifications:', error);
                 if (error.response?.data?.logout) {
                     // If server sends logout signal (401/403 with logout: true)
-                    logoutUser(); // Force logout from AuthContext
+                    logOut(); // Force logout from AuthContext
                 }
                 setNotifications([]);
             } finally {
@@ -52,7 +52,7 @@ const NotificationBell = () => {
         // Cleanup interval on unmount
         return () => clearInterval(intervalId);
 
-    }, [user, logoutUser]); // user এবং logoutUser পরিবর্তন হলে useEffect আবার চলবে
+    }, [user, logOut]); // user এবং logoutUser পরিবর্তন হলে useEffect আবার চলবে
 
 
     // Handle clicks outside the popup to close it

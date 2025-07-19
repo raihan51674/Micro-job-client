@@ -1,11 +1,12 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router'; // 'react-router-dom' সঠিক ইম্পোর্ট
 import { Briefcase, Coins } from 'lucide-react'; // Bell আইকন NotificationBell এর ভেতরে থাকবে
-import { AuthContext } from '../../../Provider/AuthProvider';
+
 import LoadingSpinner from '../../../Shared/LoadingSpinner';
-import useRole from '../../../Hooks/useRole';
 import useUserCoins from '../../../Hooks/useUserCoins';
 import NotificationBell from '../../../Component/NotificationBell/NotificationBell';
+import { AuthContext } from '../../../Provider/AuthProvider';
+import useRole from '../../../Hooks/useRole';
 
 
 const DashboardNavbar = () => {
