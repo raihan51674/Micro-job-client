@@ -29,8 +29,10 @@ const BuyerHomePage = () => {
                 return { totalTasksAdded: 0, pendingTaskSlots: 0, totalPaymentPaid: 0 };
             }
             const [tasksResponse, approvedSubmissionsResponse] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_API_URL}/my-tasks/${user.email}`),
-                axios.get(`${import.meta.env.VITE_API_URL}/buyer-approved-submissions?buyer_email=${user.email}`) // এই এন্ডপয়েন্টটি আপনার সার্ভার কোডে যোগ করতে হবে
+                axios.get(`${import.meta.env.VITE_API_URL}/my-tasks/${user.email}`, {withCredentials: true}),
+                axios.get(`${import.meta.env.VITE_API_URL}/buyer-approved-submissions?buyer_email=${user.email}`, {
+                    withCredentials: true
+                }) // এই এন্ডপয়েন্টটি আপনার সার্ভার কোডে যোগ করতে হবে
             ]);
 
             const tasks = tasksResponse.data;
@@ -61,8 +63,7 @@ const BuyerHomePage = () => {
                 return [];
             }
             const url = `${import.meta.env.VITE_API_URL}/pending-submissions?buyer_email=${user?.email}`;
-            const { data } = await axios.get(url);
-            console.log("Pending data (from server):", data);
+            const { data } = await axios.get(url, {withCredentials: true});
             return data;
         },
         enabled: !!user?.email && !loading,
@@ -72,7 +73,9 @@ const BuyerHomePage = () => {
     const approveMutation = useMutation({
         mutationFn: async (submissionId) => {
             const { data } = await axios.patch(
-                `${import.meta.env.VITE_API_URL}/approve-submission/${submissionId}`
+                `${import.meta.env.VITE_API_URL}/approve-submission/${submissionId}`,{}, {
+                    withCredentials: true
+                }
             );
             return data;
         },
@@ -104,7 +107,9 @@ const BuyerHomePage = () => {
     const rejectMutation = useMutation({
         mutationFn: async (submissionId) => {
             const { data } = await axios.patch(
-                `${import.meta.env.VITE_API_URL}/reject-submission/${submissionId}`
+                `${import.meta.env.VITE_API_URL}/reject-submission/${submissionId}`,{}, {
+                    withCredentials: true
+                }
             );
             return data;
         },

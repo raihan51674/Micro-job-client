@@ -18,7 +18,9 @@ const useRole = () => {
             }
 
             try {
-                const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/user/role/${user.email}`);
+                const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/user/role/${user?.email}`, {
+                    withCredentials: true
+                });
                 setRole(data?.role);
                 console.log("Successfully fetched role:", data?.role); // DEBUG: সফল হলে রোল দেখুন
             } catch (err) {

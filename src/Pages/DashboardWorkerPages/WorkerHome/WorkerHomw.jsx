@@ -24,7 +24,9 @@ const WorkerHome = () => {
     } = useQuery({
         queryKey: ['workerSubmissions', workerEmail], // workerEmail এখন queryKey এর অংশ
         queryFn: async () => {
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/worker/submissions?workerEmail=${workerEmail}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/worker/submissions?workerEmail=${workerEmail}`, {
+                withCredentials: true
+            });
             return response.data;
         },
         enabled: !!workerEmail, // যদি workerEmail থাকে তাহলেই কোয়েরি চালাবে
@@ -38,7 +40,9 @@ const WorkerHome = () => {
     } = useQuery({
         queryKey: ['workerMetrics', workerEmail], // workerEmail এখন queryKey এর অংশ
         queryFn: async () => {
-            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/worker/stats?workerEmail=${workerEmail}`);
+            const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/worker/stats?workerEmail=${workerEmail}`, {
+                withCredentials: true
+            });
             return response.data;
         },
         staleTime: 5 * 60 * 1000, // 5 মিনিট

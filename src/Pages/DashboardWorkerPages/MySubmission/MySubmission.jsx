@@ -26,7 +26,7 @@ const MySubmission = () => {
             // শুধুমাত্র লগইন করা ইউজারের সাবমিশন ডেটা আনার জন্য worker_email দিয়ে ফিল্টার করা হয়েছে
             // নিশ্চিত করুন আপনার backend এ /submissionData?worker_email= কাজ করে
             const { data } = await axios.get(
-                `${import.meta.env.VITE_API_URL}/submissionData?worker_email=${user?.email}`
+                `${import.meta.env.VITE_API_URL}/submissionData?worker_email=${user?.email}`, {withCredentials: true}
             );
             return data;
         },

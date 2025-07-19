@@ -90,7 +90,7 @@ const TaskDetails = () => {
         };
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_API_URL}/submit-task`, submissionData);
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/submit-task`, submissionData, {withCredentials: true});
             console.log('Submission successful:', response.data);
             Swal.fire({
                 title: 'Submitted Successfully!',

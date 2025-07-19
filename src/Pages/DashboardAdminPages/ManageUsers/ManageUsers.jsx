@@ -28,7 +28,9 @@ const ManageUsers = () => {
     queryKey: ['users'],
     queryFn: async () => {
       const loggedInUserEmail = `${user?.email}`;
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/users-management?email=${loggedInUserEmail}`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/users-management?email=${loggedInUserEmail}`, {
+        withCredentials: true
+      });
       return res.data;
     }
   });
@@ -36,7 +38,9 @@ const ManageUsers = () => {
   // ✅ Delete User
   const deleteUserMutation = useMutation({
     mutationFn: async (userId) => {
-      const res = await axios.delete(`${import.meta.env.VITE_API_URL}/users-management/${userId}`);
+      const res = await axios.delete(`${import.meta.env.VITE_API_URL}/users-management/${userId}`, {
+        withCredentials: true
+      });
       return res.data;
     },
     onSuccess: () => {
@@ -50,7 +54,9 @@ const ManageUsers = () => {
   // ✅ Update Role
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }) => {
-      const res = await axios.patch(`${import.meta.env.VITE_API_URL}/users-management/update-role/${userId}`, { role: newRole });
+      const res = await axios.patch(`${import.meta.env.VITE_API_URL}/users-management/update-role/${userId}`, { role: newRole }, {
+        withCredentials: true
+      });
       return res.data;
     },
     onSuccess: (_, variables) => {

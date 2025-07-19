@@ -90,7 +90,10 @@ export const router = createBrowserRouter([
         element: <PrivetRoute>
           <MyTasks></MyTasks>
         </PrivetRoute>,
-        loader: ({ params }) => fetch(`${import.meta.env.VITE_API_URL}/my-tasks/${params?.email}`).then(res => res.json()),
+        loader: ({ params }) => fetch(`${import.meta.env.VITE_API_URL}/my-tasks/${params?.email}`, {
+          method: 'GET',
+          credentials: "include"
+        }).then(res => res.json()),
         hydrateFallbackElement: <LoadingSpinner></LoadingSpinner>
       },
       {

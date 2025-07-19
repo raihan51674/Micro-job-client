@@ -36,11 +36,19 @@ const AdminHome = () => {
         withdrawalCountRes,
         submissionCountRes
       ] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/users-management`),
-        axios.get(`${import.meta.env.VITE_API_URL}/admin/total-available-coins`),
-        axios.get(`${import.meta.env.VITE_API_URL}/transactions`),
-        axios.get(`${import.meta.env.VITE_API_URL}/admin/total-pending-withdrawals`),
-        axios.get(`${import.meta.env.VITE_API_URL}/admin/total-pending-submissions`),
+        axios.get(`${import.meta.env.VITE_API_URL}/users-management`, {
+          withCredentials: true
+        }),
+        axios.get(`${import.meta.env.VITE_API_URL}/admin/total-available-coins`, {
+          withCredentials: true
+        }),
+        axios.get(`${import.meta.env.VITE_API_URL}/transactions-admin`, {withCredentials: true}),
+        axios.get(`${import.meta.env.VITE_API_URL}/admin/total-pending-withdrawals`, {
+          withCredentials: true
+        }),
+        axios.get(`${import.meta.env.VITE_API_URL}/admin/total-pending-submissions`, {
+          withCredentials: true
+        }),
       ]);
 
       const users = usersRes.data;
@@ -70,7 +78,9 @@ const AdminHome = () => {
   const fetchWithdrawalRequests = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/admin/withdrawal-requests`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/admin/withdrawal-requests`, {
+        withCredentials: true
+      });
       setWithdrawRequests(response.data.map(req => ({
         id: req._id,
         userId: req.worker_id,
@@ -94,7 +104,9 @@ const AdminHome = () => {
 
   const handlePaymentSuccess = async (id) => {
     try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/admin/approve-withdrawal/${id}`);
+      await axios.patch(`${import.meta.env.VITE_API_URL}/admin/approve-withdrawal/${id}`,{}, {
+        withCredentials: true
+      });
       setWithdrawRequests((prevRequests) =>
         prevRequests.map((request) =>
           request.id === id ? { ...request, status: 'Approved' } : request
@@ -116,7 +128,9 @@ const AdminHome = () => {
 
   const handlePaymentReject = async (id) => {
     try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/admin/reject-withdrawal/${id}`);
+      await axios.patch(`${import.meta.env.VITE_API_URL}/admin/reject-withdrawal/${id}`,{}, {
+        withCredentials: true
+      });
       setWithdrawRequests((prevRequests) =>
         prevRequests.map((request) =>
           request.id === id ? { ...request, status: 'Rejected' } : request

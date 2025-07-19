@@ -69,7 +69,9 @@ const AddTask = () => {
                 }
             }
 
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/add-task`, taskData)
+            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/add-task`, taskData, {
+                withCredentials: true
+            })
 
 
             if (data?.insertedId) {
@@ -85,7 +87,7 @@ const AddTask = () => {
             const {data: result} = await axios.patch(`${import.meta.env.VITE_API_URL}/decrease-coin/${user?.email}`, {
                 coinToUpdate,
                 status: "decrease"
-            })
+            }, {withCredentials: true})
             console.log(result);
 
             refetch()

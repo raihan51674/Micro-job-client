@@ -11,7 +11,7 @@ const useUserTransactions = () => {
     queryKey: ['transactions', user?.email],
     enabled: !!user?.email,
     queryFn: async () => {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/transactions`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/transactions`, {withCredentials: true});
       // Filter transactions only for the logged-in user
       return res.data.filter(item => item.userEmail === user?.email);
     },

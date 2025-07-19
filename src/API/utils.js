@@ -31,6 +31,6 @@ export const updateCoinInDb = async (email, addedCoin) => {
     const res = await axios.patch(`${import.meta.env.VITE_API_URL}/update-coin`, {
         email,
         addedCoin
-    });
+    }, {withCredentials: true});
     return res.data;
 };

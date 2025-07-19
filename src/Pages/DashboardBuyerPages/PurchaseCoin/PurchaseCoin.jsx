@@ -85,7 +85,7 @@ const PurchaseCoinComponent = () => {
     const mutation = useMutation({
         mutationKey,
         mutationFn: (purchaseDataToSave) => {
-            return axios.post(`${import.meta.env.VITE_API_URL}/save-purchase`, purchaseDataToSave)
+            return axios.post(`${import.meta.env.VITE_API_URL}/save-purchase`, purchaseDataToSave, {withCredentials: true})
         },
         onSuccess: () => {
             QueryClient.invalidateQueries({ queryKey: ['coins'] })

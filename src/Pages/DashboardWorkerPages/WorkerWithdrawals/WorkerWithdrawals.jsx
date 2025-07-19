@@ -39,7 +39,9 @@ const WorkerWithdrawals = () => {
                 throw new Error("Worker email not available for fetching balance.");
             }
             
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/worker/balance?email=${email}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/worker/balance?email=${email}`, {
+                withCredentials: true
+            });
             return res.data;
         },
         enabled: !!email, // Only run if worker email is available
@@ -75,7 +77,9 @@ const WorkerWithdrawals = () => {
     const withdrawMutation = useMutation({
         mutationFn: async (withdrawalData) => {
             // JWT ছাড়া, সরাসরি ডেটা পাঠান
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/worker/withdraw`, withdrawalData);
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/worker/withdraw`, withdrawalData, {
+                withCredentials: true
+            });
             return res.data;
         },
         onSuccess: (data) => {

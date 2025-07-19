@@ -85,7 +85,9 @@ const Login = () => {
         try {
             const result = await signIn(email, password);
             const user = result?.user;
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`, {
+                withCredentials: true
+            });
             // console.log(res); // এখানে res এর ভ্যালু দেখুন: { data: { currentCoin: 100 } }
             const currentCoin = res?.data?.currentCoin || 0; // শুধু সংখ্যাটি নিন
 
@@ -126,7 +128,9 @@ const Login = () => {
         try {
             const result = await signInWithGoogle();
             const user = result?.user;
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`, {
+                withCredentials: true
+            });
             const currentCoin = res?.data?.currentCoin || 0; // শুধু সংখ্যাটি নিন
 
             const userData = {
