@@ -1,36 +1,39 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, Clock, XCircle, Search, Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, Search, Filter, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import LoadingSpinner from '../../../Shared/LoadingSpinner'; // আপনার LoadingSpinner এর পাথ সঠিক করে নিন
-import { AuthContext } from '../../../Provider/AuthProvider'; // আপনার AuthContext এর পাথ সঠিক করে নিন
+import LoadingSpinner from '../../../Shared/LoadingSpinner';
+import { AuthContext } from '../../../Provider/AuthProvider';
+import ReactPaginate from 'react-paginate';
+
+// স্টাইল করার জন্য react-paginate এর CSS ফাইল ইম্পোর্ট করার দরকার নেই, আমরা Tailwind দিয়ে করব।
 
 const statusOptions = ['All', 'Approved', 'Pending', 'Rejected'];
+const itemsPerPageOptions = [5, 10, 15, 20];
 
 const MySubmission = () => {
-    const { user } = useContext(AuthContext); // লগইন করা ইউজারের ডেটা AuthContext থেকে আনা হচ্ছে
+    const { user } = useContext(AuthContext);
     const [expandedSubmission, setExpandedSubmission] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('All');
 
-    // TanStack Query ব্যবহার করে সার্ভার থেকে ডেটা লোড করা হচ্ছে
+    const [itemOffset, setItemOffset] = useState(0);
+    const [itemsPerPage, setItemsPerPage] = useState(itemsPerPageOptions[0]);
+
     const {
-        data: submissions = [], // সার্ভার থেকে আসা ডেটাকে 'submissions' নামে ব্যবহার করা হবে
+        data: submissions = [],
         isLoading,
         error,
-        // refetch, // ডেটা রিফ্রেশ করার প্রয়োজন হলে এটি ব্যবহার করতে পারেন
     } = useQuery({
-        queryKey: ['mySubmissions', user?.email], // queryKey-তে user?.email যোগ করা হয়েছে যাতে প্রতিটি ইউজারের জন্য ডেটা আলাদাভাবে ক্যাশে হয়
+        queryKey: ['mySubmissions', user?.email],
         queryFn: async () => {
-            // শুধুমাত্র লগইন করা ইউজারের সাবমিশন ডেটা আনার জন্য worker_email দিয়ে ফিল্টার করা হয়েছে
-            // নিশ্চিত করুন আপনার backend এ /submissionData?worker_email= কাজ করে
             const { data } = await axios.get(
-                `${import.meta.env.VITE_API_URL}/submissionData?worker_email=${user?.email}`, {withCredentials: true}
+                `${import.meta.env.VITE_API_URL}/submissionData?worker_email=${user?.email}`, { withCredentials: true }
             );
             return data;
         },
-        enabled: !!user?.email, // user?.email থাকলে তবেই এই queryটি রান হবে, নাহলে হবে না
+        enabled: !!user?.email,
     });
 
     const containerVariants = {
@@ -49,16 +52,29 @@ const MySubmission = () => {
         visible: { opacity: 1, y: 0 },
     };
 
-    // ডেটা ফিল্টারিং (সার্চ টার্ম এবং স্ট্যাটাস অনুযায়ী)
     const filteredSubmissions = submissions.filter(submission => {
-        // আপনার ডেটা স্ট্রাকচার অনুযায়ী প্রোপার্টি নাম ব্যবহার করা হয়েছে
         const matchesSearch =
-            (submission.task_id?.toLowerCase().includes(searchTerm.toLowerCase()) || // task_id ব্যবহার করা হয়েছে
-            submission.Buyer_name?.toLowerCase().includes(searchTerm.toLowerCase())); // Buyer_name ব্যবহার করা হয়েছে
+            (submission.task_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            submission.Buyer_name?.toLowerCase().includes(searchTerm.toLowerCase()));
 
         const matchesStatus = selectedStatus === 'All' || submission.status === selectedStatus;
         return matchesSearch && matchesStatus;
     });
+
+    const endOffset = itemOffset + itemsPerPage;
+    const currentSubmissions = filteredSubmissions.slice(itemOffset, endOffset);
+    const pageCount = Math.ceil(filteredSubmissions.length / itemsPerPage);
+
+    const handlePageClick = (event) => {
+        const newOffset = (event.selected * itemsPerPage) % filteredSubmissions.length;
+        setItemOffset(newOffset);
+        setExpandedSubmission(null);
+    };
+
+    useEffect(() => {
+        setItemOffset(0);
+        setExpandedSubmission(null);
+    }, [searchTerm, selectedStatus, itemsPerPage, filteredSubmissions.length]);
 
     const renderStatusBadge = (status) => {
         switch (status) {
@@ -90,7 +106,7 @@ const MySubmission = () => {
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return 'N/A'; // ডেটা না থাকলে N/A দেখাবে
+        if (!dateString) return 'N/A';
         try {
             return new Date(dateString).toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -103,12 +119,10 @@ const MySubmission = () => {
         }
     };
 
-    // লোডিং স্টেট হ্যান্ডলিং
     if (isLoading) {
-        return <LoadingSpinner />; // একটি লোডিং স্পিনার কম্পোনেন্ট দেখাবে
+        return <LoadingSpinner />;
     }
 
-    // এরর স্টেট হ্যান্ডলিং
     if (error) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-900 text-red-400 text-lg">
@@ -136,14 +150,14 @@ const MySubmission = () => {
                 </motion.div>
 
                 {/* Search and Filters */}
-                <motion.div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" variants={itemVariants}>
-                    <div className="relative col-span-1 sm:col-span-2">
+                <motion.div className="mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" variants={itemVariants}>
+                    <div className="relative col-span-1 sm:col-span-2 lg:col-span-2">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <Search className="h-4 w-4 text-gray-400" />
                         </div>
                         <input
                             type="text"
-                            placeholder="Search by task ID or buyer name..." // Placeholder আপডেট করা হয়েছে
+                            placeholder="Search by task ID or buyer name..."
                             className="block w-full pl-10 pr-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -166,18 +180,36 @@ const MySubmission = () => {
                             ))}
                         </select>
                     </div>
+
+                    {/* Items per page selector */}
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <ChevronDown className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <select
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                            value={itemsPerPage}
+                            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                        >
+                            {itemsPerPageOptions.map(option => (
+                                <option key={option} value={option} className="bg-gray-800">
+                                    {option} per page
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </motion.div>
 
                 {/* Mobile View - Cards */}
                 <div className="lg:hidden space-y-3">
-                    {filteredSubmissions.length === 0 ? (
+                    {currentSubmissions.length === 0 ? (
                         <div className="p-6 text-center text-gray-400 bg-gray-800/50 rounded-lg">
                             No submissions found matching your criteria.
                         </div>
                     ) : (
-                        filteredSubmissions.map((submission) => (
+                        currentSubmissions.map((submission) => (
                             <motion.div
-                                key={submission._id} // MongoDB এর _id ব্যবহার করা হয়েছে
+                                key={submission._id}
                                 className={`bg-gray-800/50 border rounded-lg p-4 ${submission.status === 'Rejected' ? 'border-red-700/50' :
                                     submission.status === 'Approved' ? 'border-green-700/50' : 'border-gray-700/50'
                                     }`}
@@ -185,7 +217,6 @@ const MySubmission = () => {
                             >
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        {/* task_id কে task title হিসেবে ব্যবহার করা হয়েছে, কারণ আপনার ডেটায় task_title নেই */}
                                         <h3 className="text-blue-300 font-medium">Task ID: {submission.task_id}</h3>
                                         <p className="text-gray-300 text-xs mt-1">{submission.Buyer_name}</p>
                                     </div>
@@ -213,29 +244,34 @@ const MySubmission = () => {
                                 </div>
 
                                 {expandedSubmission === submission._id && (
-                                    <div className="mt-3 pt-3 border-t border-gray-700/50 space-y-3">
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="mt-3 pt-3 border-t border-gray-700/50 space-y-3"
+                                    >
                                         <div className="grid grid-cols-2 gap-3 text-xs">
                                             <div>
-                                                <span className="text-gray-400">Submitted On:</span> {/* Label পরিবর্তন করা হয়েছে */}
-                                                <span className="text-gray-300 ml-1">{formatDate(submission.current_date)}</span> {/* current_date ব্যবহার করা হয়েছে */}
+                                                <span className="text-gray-400">Submitted On:</span>
+                                                <span className="text-gray-300 ml-1">{formatDate(submission.current_date)}</span>
                                             </div>
                                             <div>
-                                                <span className="text-gray-400">Worker Email:</span> {/* নতুন ফিল্ড */}
+                                                <span className="text-gray-400">Worker Email:</span>
                                                 <span className="text-gray-300 ml-1">{submission.worker_email}</span>
                                             </div>
                                         </div>
                                         <div>
                                             <span className="text-gray-400 text-xs">Submission Details:</span>
-                                            <p className="text-gray-300 text-sm mt-1">{submission.submission_details || 'N/A'}</p> {/* submission_details ব্যবহার করা হয়েছে */}
+                                            <p className="text-gray-300 text-sm mt-1">{submission.submission_details || 'N/A'}</p>
                                         </div>
-                                        {/* যদি feedback ফিল্ড থাকে, তাহলে তা দেখাবে, নাহলে দেখাবে না। আপনার ডেটায় feedback নেই, তাই 'No feedback yet.' দেখাবে */}
                                         {submission.feedback && (
                                             <div>
                                                 <span className="text-gray-400 text-xs">Buyer Feedback:</span>
                                                 <p className="text-gray-300 text-sm mt-1">{submission.feedback}</p>
                                             </div>
                                         )}
-                                    </div>
+                                    </motion.div>
                                 )}
                             </motion.div>
                         ))
@@ -244,7 +280,7 @@ const MySubmission = () => {
 
                 {/* Desktop View - Table */}
                 <div className="hidden lg:block overflow-x-auto rounded-lg border border-gray-700/50 shadow">
-                    {filteredSubmissions.length === 0 ? (
+                    {currentSubmissions.length === 0 ? (
                         <div className="p-8 text-center text-gray-400 text-lg bg-gray-800/70">
                             No submissions found matching your criteria.
                         </div>
@@ -273,27 +309,27 @@ const MySubmission = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-gray-800/70 divide-y divide-gray-700/50">
-                                {filteredSubmissions.map((submission) => (
+                                {currentSubmissions.map((submission) => (
                                     <motion.tr
-                                        key={submission._id} // MongoDB এর _id ব্যবহার করা হয়েছে
+                                        key={submission._id}
                                         className={`hover:bg-gray-700/60 transition-colors duration-200 ${submission.status === 'Rejected' ? 'bg-red-900/10' :
                                             submission.status === 'Approved' ? 'bg-green-900/10' : ''
                                             }`}
                                         variants={itemVariants}
                                     >
                                         <td className="px-4 py-3">
-                                            <div className="text-blue-300 font-medium">{submission.task_id}</div> {/* task_id ব্যবহার করা হয়েছে */}
-                                            <div className="text-gray-400 text-xs mt-1">Worker: {submission.worker_name}</div> {/* worker_name যোগ করা হয়েছে */}
+                                            <div className="text-blue-300 font-medium">{submission.task_id}</div>
+                                            <div className="text-gray-400 text-xs mt-1">Worker: {submission.worker_name}</div>
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
                                             {submission.Buyer_name}
                                         </td>
                                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
-                                            {formatDate(submission.current_date)} {/* current_date ব্যবহার করা হয়েছে */}
+                                            {formatDate(submission.current_date)}
                                         </td>
                                         <td className={`px-4 py-3 whitespace-nowrap font-bold ${
                                             submission.status === 'Approved' ? 'text-green-400' :
-                                                submission.status === 'Rejected' ? 'text-red-400' : 'text-yellow-400'
+                                            submission.status === 'Rejected' ? 'text-red-400' : 'text-yellow-400'
                                             }`}>
                                             ${submission.payable_amount?.toFixed(2)}
                                         </td>
@@ -302,7 +338,7 @@ const MySubmission = () => {
                                         </td>
                                         <td className="px-4 py-3 text-sm text-gray-300 max-w-xs">
                                             <div className="line-clamp-2 hover:line-clamp-none transition-all">
-                                                {submission.submission_details || 'N/A'} {/* submission_details ব্যবহার করা হয়েছে */}
+                                                {submission.submission_details || 'N/A'}
                                             </div>
                                         </td>
                                     </motion.tr>
@@ -312,10 +348,37 @@ const MySubmission = () => {
                     )}
                 </div>
 
+                {/* --- Pagination Controls (using react-paginate) --- */}
+                {filteredSubmissions.length > 0 && (
+                    <motion.div className="mt-8 flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0" variants={itemVariants}>
+                        <div className="text-gray-400 text-sm">
+                            Showing {itemOffset + 1} to {Math.min(endOffset, filteredSubmissions.length)} of {filteredSubmissions.length} submissions
+                        </div>
+                        <ReactPaginate
+                            breakLabel="..."
+                            nextLabel={<span className="flex items-center gap-1"><ChevronRight className="w-4 h-4" /> Next</span>}
+                            onPageChange={handlePageClick}
+                            pageRangeDisplayed={3}
+                            marginPagesDisplayed={1}
+                            pageCount={pageCount}
+                            previousLabel={<span className="flex items-center gap-1"> <ChevronLeft className="w-4 h-4" /> Previous</span>}
+                            renderOnZeroPageCount={null}
+                            containerClassName="flex items-center space-x-2"
+                            // Small devices: hide page numbers, show only next/previous
+                            // Medium/Large devices: show page numbers
+                            pageLinkClassName="hidden sm:block px-3 py-1 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors cursor-pointer"
+                            activeLinkClassName="!bg-blue-600 !text-white"
+                            previousLinkClassName="px-3 py-1 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1 cursor-pointer"
+                            nextLinkClassName="px-3 py-1 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1 cursor-pointer"
+                            breakLinkClassName="hidden sm:block px-3 py-1 rounded-lg bg-gray-700 text-gray-300 cursor-pointer"
+                        />
+                    </motion.div>
+                )}
+
                 {/* Footer */}
                 <motion.div className="mt-8 lg:mt-12 text-center text-gray-500 text-xs sm:text-sm" variants={itemVariants}>
-                    <p className="mb-1">Showing {filteredSubmissions.length} of {submissions.length} submissions</p>
-                    <p>&copy; {new Date().getFullYear()} CoinFlow. All rights reserved.</p>
+                    <p className="mb-1">MicroJobs Platform</p>
+                    <p>&copy; {new Date().getFullYear()} All rights reserved.</p>
                 </motion.div>
             </motion.div>
         </div>

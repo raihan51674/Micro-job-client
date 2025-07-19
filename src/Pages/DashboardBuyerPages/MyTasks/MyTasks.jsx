@@ -2,7 +2,8 @@ import { Pencil, Trash2, X, Info } from "lucide-react";
 import { useLoaderData } from "react-router";
 import { useState } from "react";
 import axios from "axios";
-import Swal from "sweetalert2"; // Import SweetAlert2
+import Swal from "sweetalert2"; // SweetAlert2 ইম্পোর্ট করুন
+import ReactPaginate from "react-paginate"; // react-paginate ইম্পোর্ট করুন
 
 // Main MyTasks Component
 const MyTasks = () => {
@@ -12,6 +13,10 @@ const MyTasks = () => {
 
     // State to manage the task currently being edited
     const [editingTask, setEditingTask] = useState(null);
+
+    // --- Pagination States ---
+    const [currentPage, setCurrentPage] = useState(0);
+    const tasksPerPage = 10; // প্রতি পৃষ্ঠায় কতগুলো টাস্ক দেখাবেন
 
     // Helper function to format date
     const formatDate = (dateString) => {
@@ -78,7 +83,6 @@ const MyTasks = () => {
                     showConfirmButton: false,
                 });
             }
-
         } catch (error) {
             console.error("Error updating task:", error);
             Swal.fire({
@@ -131,6 +135,16 @@ const MyTasks = () => {
             }
         });
     };
+
+    // --- Pagination Logic ---
+    const pageCount = Math.ceil(tasks.length / tasksPerPage);
+
+    const handlePageClick = (event) => {
+        setCurrentPage(event.selected);
+    };
+
+    const offset = currentPage * tasksPerPage;
+    const currentTasks = tasks.slice(offset, offset + tasksPerPage);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 md:p-8">
@@ -194,13 +208,14 @@ const MyTasks = () => {
 
                                         {/* Table Body */}
                                         <tbody className="divide-y divide-gray-700/50">
-                                            {tasks.map((task, index) => (
+                                            {currentTasks.map((task, index) => ( // currentTasks ব্যবহার করা হয়েছে
                                                 <tr
                                                     key={task?._id}
-                                                    className={`hover:bg-gray-700/30 transition-all duration-200 ${index % 2 === 0
-                                                        ? "bg-gray-800/20"
-                                                        : "bg-gray-800/40"
-                                                        }`}
+                                                    className={`hover:bg-gray-700/30 transition-all duration-200 ${
+                                                        index % 2 === 0
+                                                            ? "bg-gray-800/20"
+                                                            : "bg-gray-800/40"
+                                                    }`}
                                                 >
                                                     {/* Task Column */}
                                                     <td className="px-4 py-4">
@@ -229,18 +244,19 @@ const MyTasks = () => {
                                                                         " "
                                                                     ).length >
                                                                         8 && (
-                                                                            <span className="relative group ml-1 flex-shrink-0">
-                                                                                <Info className="h-3 w-3 text-gray-400 cursor-help" />
-                                                                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max p-2 text-xs text-white bg-gray-700 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
-                                                                                    {
-                                                                                        task?.taskTitle
-                                                                                    }
-                                                                                </span>
+                                                                        <span className="relative group ml-1 flex-shrink-0">
+                                                                            <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                                                                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max p-2 text-xs text-white bg-gray-700 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                                                                {
+                                                                                    task?.taskTitle
+                                                                                }
                                                                             </span>
-                                                                        )}
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                                 <p className="text-xs text-gray-400">
-                                                                    ID: {task?._id}
+                                                                    ID:{" "}
+                                                                    {task?._id}
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -249,7 +265,9 @@ const MyTasks = () => {
                                                     {/* Workers Column */}
                                                     <td className="px-4 py-4 text-center">
                                                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-900/50 text-blue-300 border border-blue-700/50">
-                                                            {task?.requiredWorkers}
+                                                            {
+                                                                task?.requiredWorkers
+                                                            }
                                                         </span>
                                                     </td>
 
@@ -308,7 +326,7 @@ const MyTasks = () => {
 
                             {/* Card View (visible on medium screens and below) */}
                             <div className="lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-                                {tasks.map((task) => (
+                                {currentTasks.map((task) => ( // currentTasks ব্যবহার করা হয়েছে
                                     <div
                                         key={task?._id}
                                         className="bg-gray-800/40 border border-gray-700/50 rounded-xl shadow-lg p-4 sm:p-5 flex flex-col justify-between hover:bg-gray-700/30 transition-colors duration-200"
@@ -396,10 +414,33 @@ const MyTasks = () => {
                                 ))}
                             </div>
 
+                            {/* Pagination Component */}
+                            <div className="mt-8 flex justify-center">
+                                <ReactPaginate
+                                    breakLabel="..."
+                                    nextLabel="next >"
+                                    onPageChange={handlePageClick}
+                                    pageRangeDisplayed={3}
+                                    pageCount={pageCount}
+                                    previousLabel="< previous"
+                                    renderOnZeroPageCount={null}
+                                    containerClassName="pagination flex space-x-2 text-white"
+                                    pageLinkClassName="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors duration-200 cursor-pointer"
+                                    previousLinkClassName="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors duration-200 cursor-pointer"
+                                    nextLinkClassName="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors duration-200 cursor-pointer"
+                                    activeLinkClassName="!bg-blue-600 !text-white cursor-pointer"
+                                    disabledClassName="opacity-50 cursor-not-allowed"
+                                />
+                            </div>
+
                             {/* Footer Stats */}
                             <div className="mt-6 text-center">
                                 <p className="text-sm text-gray-400">
                                     Displaying{" "}
+                                    <span className="font-semibold text-white">
+                                        {currentTasks.length}
+                                    </span>{" "}
+                                    of{" "}
                                     <span className="font-semibold text-white">
                                         {tasks.length}
                                     </span>{" "}

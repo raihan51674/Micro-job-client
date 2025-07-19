@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trash2, ChevronDown, ChevronUp, Search } from 'lucide-react'; // Filter icon removed
+import { Trash2, ChevronDown, ChevronUp, Search, ChevronLeft, ChevronRight } from 'lucide-react'; // Added ChevronLeft, ChevronRight
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
@@ -8,7 +8,8 @@ import axios from 'axios';
 const ManageTasks = () => {
     const [expandedTask, setExpandedTask] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    
+    const [currentPage, setCurrentPage] = useState(1); // New state for current page
+    const [tasksPerPage] = useState(5); // New state for tasks per page
 
     // Fetch tasks data using TanStack Query
     const { data: tasks = [], isLoading, isError, error, refetch } = useQuery({
@@ -17,10 +18,7 @@ const ManageTasks = () => {
             const response = await axios.get(`${import.meta.env.VITE_API_URL}/tasks`);
             return response.data;
         },
-        
     });
-
-
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -42,10 +40,32 @@ const ManageTasks = () => {
         const matchesSearch = task.taskTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
             task.taskDetails.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (task.buyer?.name && task.buyer.name.toLowerCase().includes(searchTerm.toLowerCase()));
-
-        // Status filter logic removed from here as it's no longer a UI option
         return matchesSearch;
     });
+
+    // Pagination Logic
+    const indexOfLastTask = currentPage * tasksPerPage;
+    const indexOfFirstTask = indexOfLastTask - tasksPerPage;
+    const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
+    const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
+
+    // Change page
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+    // Handle next and previous page
+    const handleNextPage = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage(prev => prev + 1);
+            setExpandedTask(null); // Collapse any expanded task on page change
+        }
+    };
+
+    const handlePreviousPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage(prev => prev - 1);
+            setExpandedTask(null); // Collapse any expanded task on page change
+        }
+    };
 
     const handleDeleteTask = async (taskId, taskTitle) => {
         try {
@@ -58,6 +78,10 @@ const ManageTasks = () => {
                 },
             });
             refetch(); // Refetch data after successful deletion
+            // After deletion, re-evaluate current page to prevent empty page if last task on page was deleted
+            if (currentTasks.length === 1 && currentPage > 1 && filteredTasks.length - 1 <= indexOfFirstTask) {
+                setCurrentPage(prev => prev - 1);
+            }
         } catch (error) {
             toast.error(`Failed to delete task '${taskTitle}'.`, {
                 duration: 3000,
@@ -70,8 +94,6 @@ const ManageTasks = () => {
         }
     };
 
-   
-    
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         try {
@@ -128,7 +150,11 @@ const ManageTasks = () => {
                             placeholder="Search tasks by title, details or buyer..."
                             className="block w-full pl-10 pr-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setCurrentPage(1); // Reset to first page on search
+                                setExpandedTask(null); // Collapse any expanded task on search
+                            }}
                         />
                     </div>
                 </motion.div>
@@ -142,7 +168,7 @@ const ManageTasks = () => {
                     <>
                         {/* Mobile and Medium Devices: Grid of Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:hidden gap-3 mb-6">
-                            {filteredTasks.map((task) => {
+                            {currentTasks.map((task) => { // Use currentTasks here
                                 return (
                                     <motion.div
                                         key={task._id}
@@ -172,7 +198,7 @@ const ManageTasks = () => {
                                         </div>
 
                                         <div className="flex items-center space-x-2 mt-2">
-                                            
+                                            {/* Status Badge can go here if needed */}
                                         </div>
 
                                         {expandedTask === task._id && (
@@ -237,7 +263,7 @@ const ManageTasks = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-gray-800/70 divide-y divide-gray-700/50">
-                                    {filteredTasks.map((task) => {
+                                    {currentTasks.map((task) => { // Use currentTasks here
                                         return (
                                             <motion.tr
                                                 key={task._id}
@@ -280,12 +306,44 @@ const ManageTasks = () => {
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* Pagination Controls */}
+                        {filteredTasks.length > 0 && (
+                            <motion.div className="flex justify-center items-center space-x-2 mt-6" variants={itemVariants}>
+                                <button
+                                    onClick={handlePreviousPage}
+                                    disabled={currentPage === 1}
+                                    className={`p-2 rounded-lg ${currentPage === 1 ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600 text-white transition-colors duration-200'}`}
+                                    aria-label="Previous page"
+                                >
+                                    <ChevronLeft className="w-5 h-5" />
+                                </button>
+                                {Array.from({ length: totalPages }, (_, i) => (
+                                    <button
+                                        key={i + 1}
+                                        onClick={() => paginate(i + 1)}
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium ${currentPage === i + 1 ? 'bg-teal-600 text-white shadow-md' : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                                            } transition-colors duration-200`}
+                                    >
+                                        {i + 1}
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={handleNextPage}
+                                    disabled={currentPage === totalPages}
+                                    className={`p-2 rounded-lg ${currentPage === totalPages ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600 text-white transition-colors duration-200'}`}
+                                    aria-label="Next page"
+                                >
+                                    <ChevronRight className="w-5 h-5" />
+                                </button>
+                            </motion.div>
+                        )}
                     </>
                 )}
 
                 {/* Footer */}
                 <motion.div className="mt-8 lg:mt-12 text-center text-gray-500 text-xs sm:text-sm" variants={itemVariants}>
-                    <p className="mb-1">Showing {filteredTasks.length} of {tasks.length} tasks • All actions are logged</p>
+                    <p className="mb-1">Showing {currentTasks.length} of {filteredTasks.length} tasks (Total: {tasks.length} tasks)</p>
                     <p>&copy; {new Date().getFullYear()} CoinFlow. All rights reserved.</p>
                 </motion.div>
             </motion.div>
