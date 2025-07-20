@@ -77,7 +77,7 @@ To get the client-side application running locally:
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib](https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib)
+    git clone https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib
     cd b11a12-client-side-mdtanvirislamrakib
     ```
 2.  **Install dependencies:**
@@ -89,7 +89,7 @@ To get the client-side application running locally:
 3.  **Create a `.env` file:**
     In the root of the client-side directory, create a `.env` file and add your environment variables.
     ```
-    VITE_API_URL=http://localhost:3000 # Or your deployed backend URL (e.g., [https://microjob-website-server.vercel.app](https://microjob-website-server.vercel.app))
+    VITE_API_URL=http://localhost:3000
     VITE_FIREBASE_API_KEY=your_firebase_api_key
     VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
     VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
