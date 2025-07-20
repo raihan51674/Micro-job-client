@@ -77,7 +77,7 @@ To get the client-side application running locally:
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib](https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib)
+    git clone https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib
     cd b11a12-client-side-mdtanvirislamrakib
     ```
 2.  **Install dependencies:**
