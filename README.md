@@ -65,7 +65,6 @@ This platform offers a comprehensive suite of features, showcasing advanced fron
 * **React Icons (v5.5.0):** Popular icon library for UI elements.
 * **React Paginate (v8.3.0):** Component for pagination.
 * **React Responsive (v10.0.1):** Media query components for responsive design.
-* **React Responsive Carousel (v3.2.23):** For image/content sliders.
 * **React Spinners (v0.17.0):** Collection of loading spinner components.
 * **SweetAlert2 (v11.22.2) & SweetAlert2 React Content (v5.1.0):** Customizable JavaScript alerts and pop-ups.
 * **Swiper (v11.2.10):** Modern touch slider.
