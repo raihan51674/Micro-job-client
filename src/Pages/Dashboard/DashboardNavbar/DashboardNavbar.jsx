@@ -1,10 +1,9 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router'; // 'react-router-dom' সঠিক ইম্পোর্ট
-import { Briefcase, Coins } from 'lucide-react'; // Bell আইকন NotificationBell এর ভেতরে থাকবে
+import { Bell, Briefcase, Coins } from 'lucide-react'; // Bell আইকন NotificationBell এর ভেতরে থাকবে
 
 import LoadingSpinner from '../../../Shared/LoadingSpinner';
 import useUserCoins from '../../../Hooks/useUserCoins';
-import NotificationBell from '../../../Component/NotificationBell/NotificationBell';
 import { AuthContext } from '../../../Provider/AuthProvider';
 import useRole from '../../../Hooks/useRole';
 
@@ -34,7 +33,7 @@ const DashboardNavbar = () => {
             <div className="flex items-center gap-5">
                 {/* Notification Bell Component */}
                 {/* ✅ এখানে NotificationBell কম্পোনেন্টটি যোগ করুন */}
-                <NotificationBell />
+                <Bell></Bell>
 
                 {/* Coins + User Image */}
                 <div className="flex items-center gap-2 bg-black/30 px-3 py-1 rounded-full border border-white/10 shadow-sm">

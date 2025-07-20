@@ -11,7 +11,7 @@ const useUserCoins = () => {
     queryKey: ['coins', user?.email],
     enabled: !!user?.email,
     queryFn: async () => {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`, {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/worker-coins?email=${user.email}`, {
         withCredentials: true
       });
       return res?.data?.currentCoin; // This should be totalCoins

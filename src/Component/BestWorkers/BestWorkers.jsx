@@ -12,8 +12,7 @@ const BestWorkers = () => {
         const fetchTopWorkers = async () => {
             try {
                 setLoading(true);
-                // Ensure your VITE_API_URL is correctly set in your .env file
-                // For example: VITE_API_URL=http://localhost:5000
+                
                 const response = await axios.get(`${import.meta.env.VITE_API_URL}/top-workers`);
                 setTopWorkers(response.data);
             } catch (err) {
