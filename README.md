@@ -1,18 +1,18 @@
 # 🚀 Micro-Task & Earning Platform - Client Side 🌐
 
 ## Live Demo:
-[Your Live Site URL Here]
+[https://microjob-website.netlify.app]
 
 ## GitHub Repository (Client-Side):
-[Your Client-Side GitHub Repository Link Here]
+[https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib]
 
 ## Admin & Test User Credentials:
-* **Admin Email:** [Your Admin Email Here]
-* **Admin Password:** [Your Admin Password Here]
-* **Sample Buyer Email:** [Example Buyer Email Here]
-* **Sample Buyer Password:** [Example Buyer Password Here]
-* **Sample Worker Email:** [Example Worker Email Here]
-* **Sample Worker Password:** [Example Worker Password Here]
+* **Admin Email:** [tanvirislamrakib93@gmail.com]
+* **Admin Password:** [A@a123456]
+* **Sample Buyer Email:** [rakib7@gmail.com]
+* **Sample Buyer Password:** [A@Aa123456]
+* **Sample Worker Email:** [tahsin@gmail.com]
+* **Sample Worker Password:** [A@a123456]
 
 ---
 
@@ -74,8 +74,8 @@ To get the client-side application running locally:
 
 1.  **Clone the repository:**
     ```bash
-    git clone [Your Client-Side GitHub Repository Link Here]
-    cd [your-client-repo-name]
+    git clone https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib
+    cd b11a12-client-side-mdtanvirislamrakib
     ```
 2.  **Install dependencies:**
     ```bash
