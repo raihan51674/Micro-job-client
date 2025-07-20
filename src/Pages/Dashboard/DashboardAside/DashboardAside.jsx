@@ -46,7 +46,7 @@ const DashboardAside = () => {
                     exit={{ x: -50, opacity: 0 }}
                     transition={{ duration: 0.2 }}
                     onClick={() => setIsSidebarOpen(true)}
-                    className="fixed top-20 left-6 p-2 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg z-40 lg:hidden text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="fixed top-4 left-6 p-2 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg z-40 lg:hidden text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     aria-label="Open sidebar"
                 >
                     <ArrowRightCircle className="h-6 w-6" />
