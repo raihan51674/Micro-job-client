@@ -1,18 +1,18 @@
 # 🚀 Micro-Task & Earning Platform - Client Side 🌐
 
 ## Live Demo:
-[https://microjob-website.netlify.app]
+[https://microjob-website.netlify.app](https://microjob-website.netlify.app)
 
 ## GitHub Repository (Client-Side):
-[https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib]
+[https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib](https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib)
 
 ## Admin & Test User Credentials:
-* **Admin Email:** [tanvirislamrakib93@gmail.com]
-* **Admin Password:** [A@a123456]
-* **Sample Buyer Email:** [rakib7@gmail.com]
-* **Sample Buyer Password:** [A@Aa123456]
-* **Sample Worker Email:** [tahsin@gmail.com]
-* **Sample Worker Password:** [A@a123456]
+* **Admin Email:** `tanvirislamrakib93@gmail.com`
+* **Admin Password:** `A@a123456`
+* **Sample Buyer Email:** `rakib7@gmail.com`
+* **Sample Buyer Password:** `A@Aa123456`
+* **Sample Worker Email:** `tahsin@gmail.com`
+* **Sample Worker Password:** `A@a123456`
 
 ---
 
@@ -74,7 +74,7 @@ To get the client-side application running locally:
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib
+    git clone [https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib](https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib)
     cd b11a12-client-side-mdtanvirislamrakib
     ```
 2.  **Install dependencies:**
