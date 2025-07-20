@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import Lottie from 'lottie-react';
 import Swal from 'sweetalert2';
-import { Link, useNavigate } from 'react-router'; // Changed to react-router-dom for consistency
+import { Link, useNavigate } from 'react-router';
 import {
     FaEnvelope,
     FaLock,
@@ -12,66 +12,52 @@ import {
     FaTimes,
     FaSignInAlt
 } from 'react-icons/fa';
-import { Briefcase } from 'lucide-react'; // Assuming Lucide-React is installed for the Briefcase icon
-
-// Local imports
-import loginLottie from '../../assets/Lottie/login-lottie.json'; // Path to your Lottie animation JSON
-import { AuthContext } from '../../Provider/AuthProvider'; // Context for authentication
-import { saveUsersInDb } from '../../API/utils'; // Utility to save user data to database
-import axios from 'axios'; // HTTP client for API requests
+import { Briefcase } from 'lucide-react';
+import loginLottie from '../../assets/Lottie/login-lottie.json';
+import { AuthContext } from '../../Provider/AuthProvider';
+import { saveUsersInDb } from '../../API/utils';
+import axios from 'axios';
 
 const Login = () => {
-    // State variables for form inputs and UI feedback
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false); // For email/password login button
-    const [isGoogleLoading, setIsGoogleLoading] = useState(false); // For Google sign-in button
+    const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-    // Auth context and navigation hook
     const { signIn, signInWithGoogle } = useContext(AuthContext);
     const navigate = useNavigate();
 
-    // Effect for real-time email validation (e.g., checking format, simulating existence)
-    // Note: For a login form, real-time "account existence" checks might be a security concern (user enumeration).
-    // Typically, only format validation happens client-side, and existence is confirmed server-side after full login attempt.
+    // Simulate checking for existing email
     useEffect(() => {
         if (email && email.includes('@')) {
             const timeout = setTimeout(() => {
-                // This is a simulated check. In a real app, you might validate email format only here
-                // and rely on the backend authentication response for actual account existence.
-                if (email === 'notfound@example.com') { // Example for demonstrating an error
+                if (email === 'notfound@example.com') {
                     setEmailError('No account found with this email address');
                 } else {
-                    setEmailError(''); // Clear error if email format seems valid or passes simulated check
+                    setEmailError('');
                 }
-            }, 500); // Debounce the validation
+            }, 500);
 
-            return () => clearTimeout(timeout); // Cleanup function for debounce
+            return () => clearTimeout(timeout);
         } else if (email === '') {
-            setEmailError(''); // Clear error when email field is empty
+            setEmailError('');
         }
     }, [email]);
 
-    /**
-     * Client-side form validation for email and password fields.
-     * Sets specific error messages for invalid inputs.
-     * @returns {boolean} True if the form inputs are valid, false otherwise.
-     */
     const validateForm = () => {
         let isValid = true;
-
         // Email validation
-        if (!email.trim()) { // Use .trim() to handle leading/trailing spaces
+        if (!email) {
             setEmailError('Email is required');
             isValid = false;
         } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email)) {
-            setEmailError('Invalid email address format');
+            setEmailError('Invalid email address');
             isValid = false;
         } else {
-            setEmailError(''); // Clear email error if valid
+            setEmailError('');
         }
 
         // Password validation
@@ -79,127 +65,82 @@ const Login = () => {
             setPasswordError('Password is required');
             isValid = false;
         } else if (password.length < 6) {
-            setPasswordError('Password must be at least 6 characters long');
+            setPasswordError('Password must be at least 6 characters');
             isValid = false;
         } else {
-            setPasswordError(''); // Clear password error if valid
+            setPasswordError('');
         }
         return isValid;
     };
 
-    /**
-     * Handles the form submission for email/password login.
-     * Performs client-side validation, calls Firebase sign-in,
-     * fetches user coins from the backend, saves user to DB, and navigates.
-     * @param {Event} e - The form submission event.
-     */
     const handleLogin = async (e) => {
-        e.preventDefault(); // Prevent default form submission behavior
+        e.preventDefault();
 
         if (!validateForm()) {
-            return; // Stop if client-side validation fails
+            return;
         }
 
-        setIsLoading(true); // Set loading state for the login button
+        setIsLoading(true);
 
         try {
-            // Attempt to sign in with email and password using Firebase
             const result = await signIn(email, password);
             const user = result?.user;
-
-            if (!user) {
-                // This case should ideally be caught by Firebase errors, but added as a safeguard
-                throw new Error('User object not returned from sign-in.');
-            }
-
-            // Fetch current coin balance from the backend
-            // Assumes VITE_API_URL is correctly configured in .env
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user?.email}`, {
-                withCredentials: true // Important for sending cookies/credentials
+                withCredentials: true
             });
-            // Extract currentCoin, defaulting to 0 if not found
-            const currentCoin = res?.data?.currentCoin || 0;
+            const currentCoin = res?.data?.currentCoin || 0; // শুধু সংখ্যাটি নিন
 
-            // Prepare user data to be saved or updated in the database
             const userData = {
-                name: user?.displayName,
-                email: user?.email,
-                image: user?.photoURL,
-                coin: currentCoin // Ensure this is a number
+                name: result?.user?.displayName,
+                email: result?.user?.email,
+                image: result?.user?.photoURL,
+                coin: currentCoin // শুধু সংখ্যা পাঠান
             };
 
-            // Save or update user data in your backend database
             await saveUsersInDb(userData);
 
-            // Show success alert using SweetAlert2
             Swal.fire({
                 title: 'Login Successful!',
                 text: 'Welcome back! Redirecting to dashboard...',
                 icon: 'success',
-                timer: 2000, // Auto-close after 2 seconds
-                showConfirmButton: false, // No confirmation button needed
-                confirmButtonColor: '#8B5CF6' // Tailwind purple-600 like color
+                timer: 2000,
+                showConfirmButton: false,
+                confirmButtonColor: '#8B5CF6'
             });
-
-            navigate("/dashboard"); // Redirect to the dashboard page
+            navigate("/dashboard");
         } catch (error) {
-            console.error('Login error:', error);
-            // Customize error messages based on Firebase error codes if needed
-            let errorMessage = 'Something went wrong. Please try again.';
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                errorMessage = 'Invalid email or password. Please check your credentials.';
-            } else if (error.code === 'auth/too-many-requests') {
-                errorMessage = 'Too many login attempts. Please try again later.';
-            } else if (error.message.includes('Network Error')) {
-                errorMessage = 'Network error. Please check your internet connection.';
-            }
-
-            // Show error alert using SweetAlert2
+            console.error(error);
             Swal.fire({
-                title: 'Login Failed',
-                text: errorMessage,
+                title: 'Error',
+                text: 'Something went wrong. Please try again.',
                 icon: 'error',
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#8B5CF6'
             });
         } finally {
-            setIsLoading(false); // Reset loading state
+            setIsLoading(false);
         }
     };
 
-    /**
-     * Handles Google Sign-In process.
-     * Calls Firebase Google sign-in, fetches user coins, saves user to DB, and navigates.
-     */
     const handleGoogleSignIn = async () => {
-        setIsGoogleLoading(true); // Set loading state for Google button
+        setIsGoogleLoading(true);
         try {
-            // Attempt to sign in with Google using Firebase
             const result = await signInWithGoogle();
             const user = result?.user;
-
-            if (!user) {
-                throw new Error('User object not returned from Google sign-in.');
-            }
-
-            // Fetch current coin balance from the backend
             const res = await axios.get(`${import.meta.env.VITE_API_URL}/my-coins?email=${user.email}`, {
                 withCredentials: true
             });
-            const currentCoin = res?.data?.currentCoin || 0; // Extract coin, default to 0
+            const currentCoin = res?.data?.currentCoin || 0; // শুধু সংখ্যাটি নিন
 
-            // Prepare user data for database
             const userData = {
-                name: user?.displayName,
-                email: user?.email,
-                image: user?.photoURL,
-                coin: currentCoin
+                name: result?.user?.displayName,
+                email: result?.user?.email,
+                image: result?.user?.photoURL,
+                coin: currentCoin // শুধু সংখ্যা পাঠান
             };
 
-            // Save or update user data in your database
             await saveUsersInDb(userData);
 
-            // Show success alert
             Swal.fire({
                 title: 'Google Sign-In Successful!',
                 text: 'Welcome! Redirecting to dashboard...',
@@ -208,30 +149,18 @@ const Login = () => {
                 showConfirmButton: false,
                 confirmButtonColor: '#8B5CF6'
             });
-
-            navigate("/dashboard"); // Redirect to dashboard
+            navigate("/dashboard");
         } catch (error) {
-            console.error('Google Sign-In error:', error);
-            // Customize error messages for Google sign-in if needed
-            let errorMessage = 'Unable to sign in with Google. Please try again.';
-            if (error.code === 'auth/popup-closed-by-user') {
-                errorMessage = 'Google sign-in window was closed.';
-            } else if (error.code === 'auth/cancelled-popup-request') {
-                errorMessage = 'Google sign-in was cancelled.';
-            } else if (error.message.includes('Network Error')) {
-                errorMessage = 'Network error during Google sign-in. Please check your internet connection.';
-            }
-
-            // Show error alert
+            console.error(error);
             Swal.fire({
                 title: 'Google Sign-In Failed',
-                text: errorMessage,
+                text: 'Unable to sign in with Google. Please try again.',
                 icon: 'error',
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#8B5CF6'
             });
         } finally {
-            setIsGoogleLoading(false); // Reset Google loading state
+            setIsGoogleLoading(false);
         }
     };
 
@@ -239,7 +168,7 @@ const Login = () => {
         <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
             <div className="w-full max-w-6xl bg-gray-800/50 backdrop-blur-md rounded-xl shadow-xl overflow-hidden border border-gray-700">
                 <div className="flex flex-col lg:flex-row">
-                    {/* Left Side - Lottie Animation and Welcome Message */}
+                    {/* Left Side - Lottie Animation */}
                     <div className="lg:w-1/2 bg-gray-800/70 p-8 flex items-center justify-center">
                         <div className="text-center">
                             <div className="w-80 h-80 mx-auto mb-6">
@@ -247,7 +176,6 @@ const Login = () => {
                                     animationData={loginLottie}
                                     loop={true}
                                     className="w-full h-full"
-                                    aria-label="Login animation"
                                 />
                             </div>
                             <h2 className="text-3xl font-bold text-white mb-4">
@@ -286,8 +214,7 @@ const Login = () => {
                             <button
                                 onClick={handleGoogleSignIn}
                                 disabled={isGoogleLoading}
-                                className="w-full mb-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all flex items-center justify-center space-x-3 border border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                                aria-label="Sign in with Google"
+                                className="w-full mb-6 py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all flex items-center justify-center space-x-3 border border-gray-600 disabled:opacity-50"
                             >
                                 {isGoogleLoading ? (
                                     <div className="flex items-center">
@@ -325,18 +252,16 @@ const Login = () => {
                                             type="email"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
-                                            onBlur={validateForm} // Validate on blur for immediate feedback
+                                            onBlur={validateForm}
                                             className="w-full pl-10 pr-12 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                                             placeholder="Enter your email"
-                                            aria-invalid={!!emailError} // Indicate invalid state for accessibility
-                                            aria-describedby="email-error" // Link to error message
                                         />
                                         {email && !emailError && (
                                             <FaCheck className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-400" />
                                         )}
                                     </div>
                                     {emailError && (
-                                        <p id="email-error" className="text-red-400 text-sm mt-1 flex items-center" role="alert">
+                                        <p className="text-red-400 text-sm mt-1 flex items-center">
                                             <FaTimes className="mr-1" />
                                             {emailError}
                                         </p>
@@ -355,23 +280,20 @@ const Login = () => {
                                             type={showPassword ? 'text' : 'password'}
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
-                                            onBlur={validateForm} // Validate on blur
+                                            onBlur={validateForm}
                                             className="w-full pl-10 pr-12 py-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
                                             placeholder="Enter your password"
-                                            aria-invalid={!!passwordError}
-                                            aria-describedby="password-error"
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white p-1"
-                                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
                                         >
                                             {showPassword ? <FaEyeSlash /> : <FaEye />}
                                         </button>
                                     </div>
                                     {passwordError && (
-                                        <p id="password-error" className="text-red-400 text-sm mt-1 flex items-center" role="alert">
+                                        <p className="text-red-400 text-sm mt-1 flex items-center">
                                             <FaTimes className="mr-1" />
                                             {passwordError}
                                         </p>
@@ -391,8 +313,8 @@ const Login = () => {
                                 {/* Submit Button */}
                                 <button
                                     type="submit"
-                                    disabled={isLoading} // Disable button when loading
-                                    className="w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={isLoading}
+                                    className="w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all disabled:opacity-50"
                                 >
                                     {isLoading ? (
                                         <div className="flex items-center justify-center">
@@ -408,7 +330,6 @@ const Login = () => {
                                 </button>
                             </form>
 
-                            {/* Register Link */}
                             <p className="text-center text-gray-400 mt-6">
                                 Don't have an account?{' '}
                                 <Link to="/register" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
