@@ -9,8 +9,6 @@ import Swal from 'sweetalert2';
 import { AuthContext } from '../../../Provider/AuthProvider';
 import LoadingSpinner from '../../../Shared/LoadingSpinner';
 
-
-
 const TaskDetails = () => {
     const { id } = useParams(); // Get taskId from URL
     const navigate = useNavigate();
@@ -23,7 +21,7 @@ const TaskDetails = () => {
         data: task = {},
         isLoading,
         error,
-        refetch,
+        // refetch, // Uncomment if you need to refetch task details explicitly
     } = useQuery({
         queryKey: ['taskDetails', id],
         queryFn: async () => {
@@ -78,7 +76,7 @@ const TaskDetails = () => {
 
         const submissionData = {
             task_id: task._id,
-            task_title: task.taskTitle,
+            task_title: task.task_title, // Changed task.taskTitle to task.task_title for consistency
             payable_amount: task?.payableAmount,
             worker_email: user?.email,
             submission_details: submissionDetails,
@@ -90,7 +88,7 @@ const TaskDetails = () => {
         };
 
         try {
-            const response = await axios.post(`${import.meta.env.VITE_API_URL}/submit-task`, submissionData, {withCredentials: true});
+            const response = await axios.post(`${import.meta.env.VITE_API_URL}/submit-task`, submissionData, { withCredentials: true });
             console.log('Submission successful:', response.data);
             Swal.fire({
                 title: 'Submitted Successfully!',
@@ -124,6 +122,7 @@ const TaskDetails = () => {
                 transition={{ duration: 0.5 }}
             >
                 <div className="text-center mb-10">
+                    {/* টাস্কের টাইটেল */}
                     <h1 className="text-4xl md:text-5xl font-extrabold bg-gradient-to-r from-green-400 via-blue-400 to-purple-500 bg-clip-text text-transparent tracking-tight leading-tight mb-4 drop-shadow-lg">
                         {task.task_title}
                     </h1>
@@ -135,6 +134,17 @@ const TaskDetails = () => {
                 {/* Task Details Section */}
                 <div className="bg-gray-700/40 p-6 rounded-xl shadow-lg border border-gray-600/70 mb-8">
                     <h2 className="text-2xl font-bold text-white mb-4">Task Details</h2>
+                    
+                    {/* --- এখানে টাস্ক ইমেজ যোগ করা হয়েছে --- */}
+                    {task?.image && ( // যদি task.image ফিল্ড থাকে
+                        <img
+                            src={task.image}
+                            alt={task.task_title || "Task Image"}
+                            className="w-full h-64 object-cover rounded-lg mb-6 shadow-md border border-gray-600"
+                        />
+                    )}
+                    {/* ------------------------------------ */}
+
                     <p className="text-gray-300 text-base leading-relaxed mb-4">
                         {task?.taskDetails}
                     </p>
@@ -164,10 +174,14 @@ const TaskDetails = () => {
                                 Workers Needed: <span className="text-lg font-bold">{task?.requiredWorkers}</span>
                             </span>
                         </div>
-                        <div className="flex items-center text-gray-300 text-sm">
+                        {/* ✅ এই `Task Image` লেখাটি অপ্রয়োজনীয়, কারণ ইমেজটি উপরে দেখা যাচ্ছে।
+                           যদি এখানে শুধু ইমেজের একটি ছোট থাম্বনেইল বা লিংক দেখাতে চান,
+                           তাহলে এখানে রাখতে পারেন, অন্যথায় এটি সরিয়ে দিতে পারেন।
+                           আমি ধরে নিচ্ছি আপনি উপরে বড় ইমেজ দেখাতেই আগ্রহী। */}
+                        {/* <div className="flex items-center text-gray-300 text-sm">
                             <img src={task?.image} alt="Task" className="w-16 h-16 object-cover rounded-md mr-2" />
                             <span>Task Image</span>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 

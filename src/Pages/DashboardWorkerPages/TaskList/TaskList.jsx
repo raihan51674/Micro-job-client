@@ -1,28 +1,26 @@
-import React, { useState, useEffect } from 'react'; // useEffect যোগ করা হয়েছে
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { DollarSign, UserPlus, Calendar, Eye, FileText, Search, ChevronRight, ChevronLeft } from 'lucide-react'; // Search আইকন যোগ করা হয়েছে
+import { DollarSign, UserPlus, Calendar, Eye, FileText, Search, ChevronRight, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../../../Shared/LoadingSpinner';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useNavigate } from 'react-router';
-import ReactPaginate from 'react-paginate'; // ✅ react-paginate ইম্পোর্ট করা হয়েছে
+import ReactPaginate from 'react-paginate';
 
-const itemsPerPageOptions = [6, 9, 12, 15]; // প্রতি পেজে কতগুলো টাস্ক দেখাবে তার অপশন
+const itemsPerPageOptions = [6, 9, 12, 15];
 
 const TaskList = () => {
     const navigate = useNavigate();
 
-    // --- State Variables for Pagination and Filtering ---
-    const [itemOffset, setItemOffset] = useState(0); // For react-paginate: Offset for current items
-    const [itemsPerPage, setItemsPerPage] = useState(itemsPerPageOptions[0]); // Default items per page
-    const [searchTerm, setSearchTerm] = useState(''); // For search functionality
+    const [itemOffset, setItemOffset] = useState(0);
+    const [itemsPerPage, setItemsPerPage] = useState(itemsPerPageOptions[0]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const {
         data: tasks = [],
         isLoading,
         error,
-        // refetch, // If you need to refetch tasks explicitly, uncomment this
     } = useQuery({
         queryKey: ['allTasks'],
         queryFn: async () => {
@@ -31,30 +29,25 @@ const TaskList = () => {
         },
     });
 
-    // Filtering tasks based on search term
     const filteredTasks = tasks.filter(task =>
         task.task_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         task.taskDetails?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         task.buyer?.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // --- React-paginate Logic ---
     const endOffset = itemOffset + itemsPerPage;
     const currentTasks = filteredTasks.slice(itemOffset, endOffset);
     const pageCount = Math.ceil(filteredTasks.length / itemsPerPage);
 
-    // Invoke when user click to request another page.
     const handlePageClick = (event) => {
         const newOffset = (event.selected * itemsPerPage) % filteredTasks.length;
         setItemOffset(newOffset);
-        // Optional: Scroll to top of the task list when page changes
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // Reset itemOffset to 0 when search term or itemsPerPage changes
     useEffect(() => {
         setItemOffset(0);
-    }, [searchTerm, itemsPerPage, filteredTasks.length]); // filteredTasks.length added to reset if filter changes total items
+    }, [searchTerm, itemsPerPage, filteredTasks.length]);
 
 
     const containerVariants = {
@@ -132,7 +125,7 @@ const TaskList = () => {
 
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <FileText className="h-4 w-4 text-gray-400" /> {/* Changed icon to FileText */}
+                            <FileText className="h-4 w-4 text-gray-400" />
                         </div>
                         <select
                             className="block w-full pl-10 pr-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
@@ -167,6 +160,23 @@ const TaskList = () => {
                                 variants={itemVariants}
                                 whileHover={{ y: -5 }}
                             >
+                                {/* --- এখানে প্রতিটি টাস্কের জন্য ইমেজ যোগ করা হয়েছে --- */}
+                                {task.image ? ( // যদি task.task_image ফিল্ড থাকে
+                                    <img
+                                        src={task.image} // আপনার টাস্ক অবজেক্টে ইমেজের URL থাকা উচিত
+                                        alt={task.task_title}
+                                        className="w-full h-40 object-cover rounded-lg mb-4 shadow-md"
+                                    />
+                                ) : (
+                                    // যদি task.task_image না থাকে, একটি প্লেসহোল্ডার ইমেজ দেখান
+                                    <img
+                                        src="https://via.placeholder.com/400x200?text=No+Image+Available" // একটি জেনেরিক প্লেসহোল্ডার ইমেজ
+                                        alt="No Image Available"
+                                        className="w-full h-40 object-cover rounded-lg mb-4 shadow-md bg-gray-600"
+                                    />
+                                )}
+                                {/* --------------------------------------------------- */}
+
                                 <div className="mb-4">
                                     <h3 className="text-xl font-bold text-white mb-2 leading-tight">
                                         {task.task_title}
@@ -217,7 +227,7 @@ const TaskList = () => {
 
                                 <motion.button
                                     onClick={() =>
-                                        handleViewDetails(task._id, task?.task_title) // changed taskTitle to task_title
+                                        handleViewDetails(task._id, task?.task_title)
                                     }
                                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg text-base shadow-md transition-all duration-200 flex items-center justify-center gap-2 mt-auto"
                                     whileHover={{ scale: 1.02 }}
