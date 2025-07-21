@@ -19,6 +19,8 @@ import ErrorPage from "../Pages/ErrorPage/ErrorPage";
 import LoadingSpinner from "../Shared/LoadingSpinner";
 import axios from "axios";
 import TaskDetails from "../Pages/DashboardWorkerPages/TaskDetails/TaskDetails";
+import ProfilePage from "../Shared/ProfilePage";
+import EditProfilePage from "../Pages/EditProfilePage/EditProfilePage ";
 
 
 
@@ -42,6 +44,18 @@ export const router = createBrowserRouter([
       {
         path: "/login",
         Component: Login
+      },
+      {
+        path: "/profile",
+        element: <PrivetRoute>
+          <ProfilePage></ProfilePage>
+        </PrivetRoute>
+      },
+      {
+        path: "/edit-profile",
+        element: <PrivetRoute>
+          <EditProfilePage></EditProfilePage>
+        </PrivetRoute>
       }
     ]
   },
