@@ -1,11 +1,12 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router'; // 'react-router-dom' সঠিক ইম্পোর্ট
-import { Bell, Briefcase, Coins } from 'lucide-react'; // Bell আইকন NotificationBell এর ভেতরে থাকবে
+import { Briefcase, Coins } from 'lucide-react'; // Bell আইকন NotificationBell এর ভেতরে থাকবে না
 
 import LoadingSpinner from '../../../Shared/LoadingSpinner';
 import useUserCoins from '../../../Hooks/useUserCoins';
 import { AuthContext } from '../../../Provider/AuthProvider';
 import useRole from '../../../Hooks/useRole';
+import NotificationBell from '../../../Component/NotificationBell/NotificationBell';
 
 
 const DashboardNavbar = () => {
@@ -33,7 +34,7 @@ const DashboardNavbar = () => {
             <div className="flex items-center gap-5">
                 {/* Notification Bell Component */}
                 {/* ✅ এখানে NotificationBell কম্পোনেন্টটি যোগ করুন */}
-                <Bell></Bell>
+                <NotificationBell /> {/* <Bell></Bell> এর পরিবর্তে NotificationBell ব্যবহার করুন */}
 
                 {/* Coins + User Image */}
                 <div className="flex items-center gap-2 bg-black/30 px-3 py-1 rounded-full border border-white/10 shadow-sm">
@@ -45,12 +46,12 @@ const DashboardNavbar = () => {
                         />
                     ) : (
                         <div className="h-9 w-9 rounded-full bg-gray-600 flex items-center justify-center text-white font-semibold border-2 border-blue-500">
-                            {user?.displayName?.charAt(0).toUpperCase() || ''} {/* ✅ Added nullish coalescing for safety */}
+                            {user?.displayName?.charAt(0).toUpperCase() || ''}
                         </div>
                     )}
                     <div className="flex items-center gap-1 text-sm font-medium text-gray-100">
                         <Coins className="h-4 w-4 text-yellow-400" />
-                        {coins} {/* ✅ Display coins from useUserCoins */}
+                        {coins}
                     </div>
                 </div>
 

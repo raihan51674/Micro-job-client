@@ -21,6 +21,7 @@ import axios from "axios";
 import TaskDetails from "../Pages/DashboardWorkerPages/TaskDetails/TaskDetails";
 import ProfilePage from "../Shared/ProfilePage";
 import EditProfilePage from "../Pages/EditProfilePage/EditProfilePage ";
+import NotificationsPage from "../Component/NotificationsPage/NotificationsPage";
 
 
 
@@ -111,7 +112,7 @@ export const router = createBrowserRouter([
         hydrateFallbackElement: <LoadingSpinner></LoadingSpinner>
       },
       {
-        path: 'task/:id', 
+        path: 'task/:id',
         element: <TaskDetails />,
       },
       {
@@ -140,7 +141,12 @@ export const router = createBrowserRouter([
         element: <PrivetRoute>
           <ManageTasks></ManageTasks>
         </PrivetRoute>
-      }
+      },
+      {
+        path: "/dashboard/notifications",
+        element: <NotificationsPage />,
+      },
+
     ]
   }
 ]);
