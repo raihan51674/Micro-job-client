@@ -224,7 +224,7 @@ const WorkerHome = () => {
                                 >
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <h3 className="text-blue-300 font-medium">{submission.task_title}</h3>
+                                            <h3 className="text-blue-300 font-medium">{submission.taskTitle}</h3>
                                             <p className="text-gray-300 text-xs mt-1">{submission.buyer_name}</p>
                                         </div>
                                         <div className="flex items-center space-x-2">
@@ -302,7 +302,7 @@ const WorkerHome = () => {
                                             variants={itemVariants}
                                         >
                                             <td className="px-4 py-3">
-                                                <div className="text-blue-300 font-medium">{submission.task_title}</div>
+                                                <div className="text-blue-300 font-medium">{submission.taskTitle}</div>
                                                 <div className="text-gray-400 text-xs mt-1">ID: {submission._id}</div>
                                             </td>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
