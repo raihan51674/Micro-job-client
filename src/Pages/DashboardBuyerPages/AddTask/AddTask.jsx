@@ -1,4 +1,3 @@
-
 import { motion } from 'framer-motion';
 import Swal from 'sweetalert2';
 import {
@@ -10,7 +9,7 @@ import {
     Info,
     Image,
     Upload,
-    X,
+    // X, // X icon not used in the current component, can be removed if not needed elsewhere
 } from 'lucide-react';
 import { imageUpload } from '../../../API/utils';
 import axios from 'axios';
@@ -38,6 +37,16 @@ const AddTask = () => {
         const submissionInfo = form.submission_info.value;
         const taskImageFile = form.task_image_file.files[0];
 
+        // Ensure image file is present before attempting upload
+        if (!taskImageFile) {
+            Swal.fire({
+                icon: "error",
+                title: "Image Missing!",
+                text: "Please upload a task image.",
+            });
+            return;
+        }
+
         const imageURL = await imageUpload(taskImageFile)
 
         const coinToUpdate = Math.round(requiredWorkers * payableAmount)
@@ -45,17 +54,22 @@ const AddTask = () => {
         if (coinToUpdate > coins) {
             Swal.fire({
                 icon: "error",
-                title: "You don't add task...",
-                text: "Not available Coin. Purchase Coin ",
+                title: "You don't have enough coins!",
+                text: "You need more coins to add this task. Please purchase coins.",
+                confirmButtonText: 'Purchase Coins',
+                confirmButtonColor: '#8B5CF6',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    navigate("/dashboard/purchase-coins");
+                }
             });
-            return navigate("/dashboard/purchase-coins")
+            return;
         }
 
-
-
-        if (coinToUpdate <= coins) {
+        // Only proceed if sufficient coins are available
+        // if (coinToUpdate <= coins) { // This check is implicitly handled by the previous if block
             const taskData = {
-                taskTitle,
+                task_title: taskTitle, // Changed to task_title for consistency with other components
                 taskDetails,
                 requiredWorkers: parseInt(requiredWorkers),
                 payableAmount: parseInt(payableAmount),
@@ -69,33 +83,42 @@ const AddTask = () => {
                 }
             }
 
-            const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/add-task`, taskData, {
-                withCredentials: true
-            })
+            try {
+                const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/add-task`, taskData, {
+                    withCredentials: true
+                });
 
 
-            if (data?.insertedId) {
-                // Show SweetAlert
+                if (data?.insertedId) {
+                    Swal.fire({
+                        title: 'Task Added Successfully!',
+                        icon: 'success',
+                        confirmButtonText: 'Great!',
+                    });
+                    // Reset the form after successful submission
+                    form.reset();
+                    // Optional: Manually clear the file input's display if needed, though form.reset() usually handles it
+                    // document.getElementById('task_image_file_display').textContent = 'Choose an image file';
+                }
+
+                const { data: result } = await axios.patch(`${import.meta.env.VITE_API_URL}/decrease-coin/${user?.email}`, {
+                    coinToUpdate,
+                    status: "decrease"
+                }, { withCredentials: true });
+                console.log(result);
+
+                refetch(); // Refetch user coins to show updated balance
+            } catch (error) {
+                console.error("Error adding task or decreasing coins:", error);
                 Swal.fire({
-                    title: 'Task Added Successfully!',
-                    icon: 'success',
-                    confirmButtonText: 'Great!',
-
-                })
+                    icon: "error",
+                    title: "Failed to Add Task",
+                    text: "There was an error adding your task. Please try again.",
+                });
             }
-
-            const {data: result} = await axios.patch(`${import.meta.env.VITE_API_URL}/decrease-coin/${user?.email}`, {
-                coinToUpdate,
-                status: "decrease"
-            }, {withCredentials: true})
-            console.log(result);
-
-            refetch()
-        }
-
-
-
+        // } // Closing the unnecessary if block
     };
+
     if(isLoading) return <LoadingSpinner></LoadingSpinner>
 
     return (
@@ -154,7 +177,7 @@ const AddTask = () => {
                                 type="number"
                                 id="required_workers"
                                 name="required_workers"
-                                min="0"
+                                min="1" // Changed min to 1, as 0 workers isn't logical for a task
                                 placeholder="e.g., 100"
                                 className="w-full p-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner"
                                 required
@@ -222,14 +245,20 @@ const AddTask = () => {
                         </label>
 
                         <label className="w-full p-3 rounded-lg bg-white/5 border border-white/10 text-white focus-within:ring-2 focus-within:ring-blue-500 transition-all cursor-pointer flex items-center justify-between shadow-inner">
-                            <span className="text-gray-400 text-sm truncate">
+                            {/* Dynamically display selected file name */}
+                            <span id="task_image_file_display" className="text-gray-400 text-sm truncate">
                                 Choose an image file
                             </span>
                             <input
                                 type="file"
+                                id="task_image_file" // Added ID for easier JS manipulation
                                 name="task_image_file"
                                 accept="image/*"
                                 className='sr-only'
+                                onChange={(e) => { // Added onChange handler to update display text
+                                    const fileName = e.target.files[0]?.name || 'Choose an image file';
+                                    document.getElementById('task_image_file_display').textContent = fileName;
+                                }}
                                 required
                             />
                             <span className="ml-2 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors cursor-pointer">
@@ -242,7 +271,7 @@ const AddTask = () => {
                     {/* Add Task Button */}
                     <motion.button
                         type="submit"
-                        whileHover={{ scale: 1.02 }} // Darker blue on hover
+                        whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
