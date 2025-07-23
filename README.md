@@ -3,8 +3,8 @@
 ## Live Demo:
 [https://microjob-website.netlify.app](https://microjob-website.netlify.app)
 
-## GitHub Repository (Client-Side):
-[https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib](https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib)
+## GitHub Repository (Server-Side):
+[https://github.com/mdtanvirislamrakib/Micro-Job-Website-Server](https://github.com/mdtanvirislamrakib/Micro-Job-Website-Server)
 
 ## Backend API (Live Link):
 [https://microjob-website-server.vercel.app](https://microjob-website-server.vercel.app)
