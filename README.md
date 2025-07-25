@@ -1,11 +1,5 @@
 # 🚀 Micro-Task & Earning Platform - Client Side 🌐
 
-## Live Demo:
-[https://microjob-website.netlify.app](https://microjob-website.netlify.app)
-
-## GitHub Repository (Server-Side):
-[https://github.com/mdtanvirislamrakib/Micro-Job-Website-Server](https://github.com/mdtanvirislamrakib/Micro-Job-Website-Server)
-
 ## Backend API (Live Link):
 [https://microjob-website-server.vercel.app](https://microjob-website-server.vercel.app)
 
@@ -74,18 +68,14 @@ This platform offers a comprehensive suite of features, showcasing advanced fron
 
 To get the client-side application running locally:
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/Programming-Hero-Web-Course4/b11a12-client-side-mdtanvirislamrakib
-    cd b11a12-client-side-mdtanvirislamrakib
-    ```
-2.  **Install dependencies:**
+
+1.  **Install dependencies:**
     ```bash
     npm install
     # or
     yarn install
     ```
-3.  **Create a `.env` file:**
+2.  **Create a `.env` file:**
     In the root of the client-side directory, create a `.env` file and add your environment variables.
     ```
     VITE_API_URL=http://localhost:3000
@@ -98,7 +88,7 @@ To get the client-side application running locally:
     VITE_FIREBASE_MEASUREMENT_ID=your_firebase_measurement_id
     VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
     ```
-4.  **Run the development server:**
+3.  **Run the development server:**
     ```bash
     npm run dev
     # or
