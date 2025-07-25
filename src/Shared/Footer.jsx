@@ -16,26 +16,20 @@ const Footer = () => {
     {
       name: 'LinkedIn',
       icon: FaLinkedin,
-      url: 'https://linkedin.com/in/yourprofile', // REPLACE THIS
+      url: 'https://www.linkedin.com/in/md-raihan-islam-b64aab274', // REPLACE THIS
       color: 'hover:text-blue-500'
     },
     {
       name: 'GitHub',
       icon: FaGithub,
-      url: 'https://github.com/mdtanvirislamrakib',
+      url: 'https://github.com/raihan51674',
       color: 'hover:text-gray-400'
     },
     {
       name: 'Facebook',
       icon: FaFacebook,
-      url: 'https://www.facebook.com/ra.k.ib.912236',
+      url: 'https://www.facebook.com/rayyan.islam.2025',
       color: 'hover:text-blue-600'
-    },
-    {
-      name: 'Instagram',
-      icon: FaInstagram,
-      url: 'https://www.instagram.com/tanvirislam_rakib/',
-      color: 'hover:text-pink-500'
     },
   ];
 
